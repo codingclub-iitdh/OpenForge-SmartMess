@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import axios from 'axios';
 import {
   Card,
-  CardMedia,
   Typography,
   Rating,
   FormControl,
@@ -96,24 +96,9 @@ const FoodRatingCard = ({ item, ratings, setRatedFoodItems, ratedItem, isReturn,
         }
       }}
     >
-      <CardMedia
-        image={item?.Image}
-        component="img"
-        sx={{
-          borderRadius: '50%',
-          height: '100px',
-          width: '100px',
-          objectFit: 'cover',
-          boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-          mb: 2,
-          border: '3px solid white',
-          background: '#f4f6f8'
-        }}
-        loading="lazy"
-      />
       
       <Typography variant="h6" component="p" textAlign="center" sx={{ fontWeight: 800, color: '#2E0845', fontFamily: "'DM Serif Display', serif", lineHeight: 1.2, mb: 0.5 }}>
-        {item?.Name?.length > 18 ? item?.Name?.slice(0, 18) + '...' : item?.Name}
+        {item?.Name?.length > 18 ? `${item?.Name?.slice(0, 18)}...` : item?.Name}
       </Typography>
       
       <Typography variant="caption" component="p" textAlign="center" sx={{ color: 'text.secondary', fontWeight: 700, mb: 2 }}>
@@ -181,6 +166,15 @@ const FoodRatingCard = ({ item, ratings, setRatedFoodItems, ratedItem, isReturn,
       </form>
     </Card>
   );
+};
+
+FoodRatingCard.propTypes = {
+  item: PropTypes.object,
+  ratings: PropTypes.object,
+  setRatedFoodItems: PropTypes.func,
+  ratedItem: PropTypes.object,
+  isReturn: PropTypes.bool,
+  navigate: PropTypes.func,
 };
 
 export default FoodRatingCard;

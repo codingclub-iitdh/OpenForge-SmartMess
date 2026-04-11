@@ -27,17 +27,23 @@ export default function UserActionsList(props) {
     const res = await deleteUserSuggestion({ suggestionId });
     setSuggestions((suggestions) => {
       return suggestions.filter((ele) => {
-        return ele._id != suggestionId;
+        return ele._id !== suggestionId;
       });
     });
-    socket.emit('delete-suggestion', res.data.deletedSuggestion);
+    if (res?.data?.deletedSuggestion) {
+      socket.emit('delete-suggestion', res.data.deletedSuggestion);
+    }
 
 
   };
 
   const fetchUserSuggestions = React.useCallback(async () => {
     const res = await getUserSuggestion();
-    setSuggestions(res.data.suggestions);
+    if (res?.data?.suggestions) {
+      setSuggestions(res.data.suggestions);
+    } else {
+      setSuggestions([]);
+    }
   }, []);
 
   React.useEffect(() => {

@@ -1,20 +1,19 @@
 import React, { useCallback, useEffect, useState, useContext } from 'react';
-import { useLinkClickHandler, useNavigate } from 'react-router-dom';
-import { Chip, Container, Typography, Button, Fab, Drawer } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Chip, Container, Typography, Button, Fab, Drawer, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
-import { SocketContext } from '../../Context/socket';
 import DehazeIcon from '@mui/icons-material/Dehaze';
+import CloseIcon from '@mui/icons-material/Close';
+
+import { SocketContext } from '../../Context/socket';
 import SuggestionCard from './Suggestions/SuggestionCards';
 import './index.css';
 import UserActionsList from './Suggestions/UserActionList';
 import { getAllSuggestions } from './apis';
 import CustomError from '../CustomErrorMessage';
 import Filter from './Suggestions/Filter';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import Dehaze from '@mui/icons-material/Dehaze';
-import CloseIcon from '@mui/icons-material/Close';
 
 const Suggestions = () => {
   const navigate = useNavigate();
@@ -23,10 +22,15 @@ const Suggestions = () => {
   const [statusFilter, setStatusFilter] = useState('open'); // Default to showing open suggestions
   const [typeFilter, setTypeFilter] = useState('');
   const [isDrawarOpen, setIsDrawarOpen] = useState(false);
+  const isLaptop = useMediaQuery('(min-width:1023px)');
+  const isTabletMin = useMediaQuery('(min-width:427px)');
+  const isTabletMax = useMediaQuery('(max-width:1022px)');
+  const isMobile = useMediaQuery('(max-width:426px)');
+  
   const media = {
-    isLaptop: useMediaQuery('(min-width:1023px)'),
-    isTablet: useMediaQuery('(min-width:427px)') && useMediaQuery('(max-width:1022px)'),
-    isMobile: useMediaQuery('(max-width:426px)'),
+    isLaptop,
+    isTablet: isTabletMin && isTabletMax,
+    isMobile,
   };
   const [user, setUser] = React.useState({});
   const getUser = async () => {
@@ -49,11 +53,11 @@ const Suggestions = () => {
   const [vote, setVote] = useState(null);
   const [updates, setUpdates] = useState(false);
 
-  const socket_RemoveSuggestion = useCallback((deletedSuggestion) => {
+  const socketRemoveSuggestion = useCallback((deletedSuggestion) => {
     console.log({ deletedSuggestion });
     setSuggestions((suggestions) => {
       return suggestions.filter((ele) => {
-        return ele._id != deletedSuggestion._id;
+        return ele._id !== deletedSuggestion._id;
       });
     });
   }, []);
@@ -61,9 +65,7 @@ const Suggestions = () => {
   useEffect(() => {
     let mount = true;
     if (mount) {
-      socket.on('delete-suggestion', (deletedSuggestion) => {
-        socket_RemoveSuggestion(deletedSuggestion);
-      });
+      socket.on('remove-suggestion', socketRemoveSuggestion);
       socket.on('new-post', () => {
         setUpdates(true);
       });
@@ -72,7 +74,7 @@ const Suggestions = () => {
       mount = false;
       // socket.off();
     };
-  }, [vote, socket, socket_RemoveSuggestion, setUpdates]);
+  }, [socket, socketRemoveSuggestion, setUpdates]);
 
   const fetchAllSuggestions = useCallback(async () => {
     const res = await getAllSuggestions();
@@ -98,7 +100,7 @@ const Suggestions = () => {
   }, [suggestions, statusFilter]);
 
   const filterSuggestions = (suggestions, status) => {
-    const filtered = suggestions.filter((suggestion) => suggestion.status === status);
+    const filtered = suggestions.filter((suggestion) => (suggestion.status || 'open') === status);
     setFilteredSuggestions(filtered);
   };
   const [currentPage, setCurrentPage] = useState(1);
@@ -255,7 +257,7 @@ const Suggestions = () => {
                       setIsDrawarOpen(!isDrawarOpen);
                     }}
                   >
-                    {!isDrawarOpen ? <Dehaze /> : <CloseIcon />}
+                    {!isDrawarOpen ? <DehazeIcon /> : <CloseIcon />}
                   </Fab>
                   <Drawer
                     open={isDrawarOpen}

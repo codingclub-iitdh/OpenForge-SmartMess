@@ -30,16 +30,12 @@ const MenuCalendar = ({ loading, data, title = "Weekly Highlights" }) => {
                       overflow: 'hidden', 
                       height: '100%',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                      border: '1px solid rgba(108,27,133,0.1)'
+                      border: '1px solid rgba(108,27,133,0.1)',
+                      bgcolor: 'white'
                     }}
-                    cover={
-                      <Box sx={{ position: 'relative', height: 160 }}>
-                        <img 
-                          alt={item?.Name} 
-                          src={item?.Image} 
-                          style={{ height: '100%', width: '100%', objectFit: 'cover' }} 
-                        />
-                        <Box sx={{ 
+                  >
+                    <Box sx={{ p: 2, position: 'relative' }}>
+                       <Box sx={{ 
                           position: 'absolute', 
                           top: 10, 
                           right: 10, 
@@ -48,17 +44,16 @@ const MenuCalendar = ({ loading, data, title = "Weekly Highlights" }) => {
                           px: 1, 
                           borderRadius: 1, 
                           fontSize: '0.7rem', 
-                          fontWeight: 800 
+                          fontWeight: 800,
+                          zIndex: 1
                         }}>
                           LIVE
                         </Box>
-                      </Box>
-                    }
-                  >
-                    <Meta 
-                      title={<Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{item?.Name}</Typography>} 
-                      description={null}
-                    />
+                        <Meta 
+                          title={<Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mt: 1 }}>{item?.Name}</Typography>} 
+                          description={null}
+                        />
+                    </Box>
                   </Card>
                 </Tooltip>
               </Grid>

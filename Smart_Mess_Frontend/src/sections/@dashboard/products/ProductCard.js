@@ -45,7 +45,9 @@ export default function ShopProductCard({ product }) {
             {status}
           </Label>
         )}
-        <StyledProductImg alt={name} src={cover} />
+        <Box sx={{ position: 'absolute', top: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(108,27,133,0.03)', color: '#2E0845', fontWeight: 800 }}>
+          {name.charAt(0)}
+        </Box>
       </Box>
 
       <Stack spacing={2} sx={{ p: 3 }}>

@@ -14,9 +14,22 @@ const SuggestionForm = () => {
     suggestion: '',
     image: null,
     suggestionType: '',
+    recipient: 'manager', 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userRole, setUserRole] = useState('user');
   const socket = useContext(SocketContext);
+
+  const getUserRole = useCallback(() => {
+    try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user?.Role) setUserRole(user.Role);
+    } catch (e) { console.error(e); }
+  }, []);
+
+  React.useEffect(() => {
+    getUserRole();
+  }, [getUserRole]);
 
   const imageCompressOpts = {
     maxSizeMB: 1,
@@ -31,6 +44,7 @@ const SuggestionForm = () => {
     formData.append('suggestionType', suggestion.suggestionType);
     formData.append('suggestionTitle', suggestion.title);
     formData.append('suggestion', suggestion.suggestion);
+    formData.append('recipient', suggestion.recipient);
     formData.append('suggestionId', uuid());
     if (suggestion.image) {
       try {
@@ -58,6 +72,7 @@ const SuggestionForm = () => {
         suggestion: '',
         image: null,
         suggestionType: '',
+        recipient: 'both',
       });
       document.getElementById('image-upload').value = null;
       socket.emit('new-post');
@@ -102,6 +117,37 @@ const SuggestionForm = () => {
             <MenuItem value="hygiene">Hygiene / Sanitation</MenuItem>
             <MenuItem value="contamination">Food Contamination</MenuItem>
             <MenuItem value="other">Other Inquiry</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl fullWidth>
+          <InputLabel id="recipient-label" sx={{ color: '#2E0845', fontWeight: 600 }}>Message Recipient (Target)</InputLabel>
+          <Select
+            labelId="recipient-label"
+            value={suggestion.recipient}
+            label="Message Recipient (Target)"
+            required
+            onChange={(e) => setSuggestion({ ...suggestion, recipient: e.target.value })}
+            sx={{
+              borderRadius: 3,
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#ffad4a', strokeWidth: 2 },
+            }}
+          >
+            {userRole === 'user' && [
+                <MenuItem key="manager" value="manager">Mess Manager</MenuItem>,
+                <MenuItem key="dean" value="dean">Dean Student Welfare</MenuItem>,
+                <MenuItem key="both" value="both">Both (Dean & Manager)</MenuItem>
+            ]}
+            {userRole === 'manager' && [
+                <MenuItem key="dean" value="dean">Dean Student Welfare</MenuItem>,
+                <MenuItem key="student" value="student">Students (General Announcement Issue)</MenuItem>,
+                <MenuItem key="both" value="both">Both (Dean & Students)</MenuItem>
+            ]}
+            {userRole === 'dean' && [
+                <MenuItem key="manager" value="manager">Mess Manager</MenuItem>,
+                <MenuItem key="student" value="student">Students (Direct Notice)</MenuItem>,
+                <MenuItem key="both" value="both">Both (Manager & Students)</MenuItem>
+            ]}
           </Select>
         </FormControl>
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Spin, Modal, Form, Input, Select, Popconfirm, message, Tabs, Divider } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Typography, Card, Box, Grid, Stack, Button, IconButton } from '@mui/material';
-import { getDashTimeTable, getAllFoodIitems, addFoodItem, delFoodItem, updateFoodItemApi, getFoodItemRating } from '../../../utils/apis';
+import { getDashTimeTable, getAllFoodIitems, addFoodItem, delFoodItem, updateFoodItemApi, getFoodItemRating, createFoodItem } from '../../../utils/apis';
 import StarIcon from '@mui/icons-material/Star';
 
 const { Option } = Select;
@@ -18,11 +18,13 @@ const VisualTimetableEditor = () => {
   // Modals state
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [activeSlot, setActiveSlot] = useState({ day: '', type: '' });
   const [editingItem, setEditingItem] = useState(null);
   
   const [addForm] = Form.useForm();
   const [editForm] = Form.useForm();
+  const [createForm] = Form.useForm();
 
   const fetchTimetable = async () => {
     setLoading(true);
@@ -138,6 +140,28 @@ const VisualTimetableEditor = () => {
      } catch(e) {}
   };
 
+  const submitCreateRecipe = async () => {
+     try {
+       const values = await createForm.validateFields();
+       const payload = {
+         name: values.name,
+         image: values.image || "https://via.placeholder.com/150",
+         category: Number(values.category) || 2
+       };
+       const res = await createFoodItem(payload);
+       if (res && res.ok) {
+         message.success("New Master Recipe created!");
+         setCreateModalOpen(false);
+         createForm.resetFields();
+         fetchMasterFoods();
+       } else {
+         message.error("Failed to create recipe");
+       }
+     } catch(e) {
+       console.error(e);
+     }
+  };
+
 
   // --- Render Helpers ---
   const renderMealSlotItems = (day, mealType) => {
@@ -171,17 +195,13 @@ const VisualTimetableEditor = () => {
              return (
                <Grid item xs={12} sm={6} md={4} lg={3} key={item._id}>
                  <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%', border: '1px solid rgba(108,27,133,0.1)', borderRadius: 2 }}>
-                   <Box sx={{ position: 'relative', height: 120 }}>
-                     <img src={item.Image} alt={item.Name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                     
-                     <Box sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.9)', px: 1, py: 0.5, borderRadius: 2, display: 'flex', alignItems: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                   <Box sx={{ p: 2, flexGrow: 1, position: 'relative' }}>
+                     <Box sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.9)', px: 1, py: 0.5, borderRadius: 2, display: 'flex', alignItems: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                         <StarIcon sx={{ color: '#ffad4a', fontSize: '14px', mr: 0.5 }} />
                         <Typography variant="caption" sx={{ fontWeight: 800, color: '#2E0845' }}>{ratingScore}</Typography>
                         <Typography variant="caption" sx={{ color: 'text.secondary', ml: 0.5, fontSize: '0.65rem' }}>({reviewCount})</Typography>
                      </Box>
-                   </Box>
-                   <Box sx={{ p: 2, flexGrow: 1 }}>
-                     <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: '#2E0845' }}>{item.Name}</Typography>
+                     <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', color: '#2E0845', mt: 1 }}>{item.Name}</Typography>
                    </Box>
                    <Divider sx={{ my: 0 }} />
                    <Stack direction="row" justifyContent="space-between" sx={{ p: 1, bgcolor: 'rgba(0,0,0,0.02)' }}>
@@ -269,9 +289,37 @@ const VisualTimetableEditor = () => {
               size="large"
             />
           </Form.Item>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            Note: If the food you want is not in this list, you must first create it in the Master Matrix.
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Note: If the food is missing, add it to the catalog first.
+            </Typography>
+            <Button size="small" variant="text" onClick={() => setCreateModalOpen(true)} sx={{ color: '#2E0845', fontWeight: 700 }}>
+               + Add Food Item
+            </Button>
+          </Box>
+        </Form>
+      </Modal>
+
+      {/* CREATE NEW RECIPE MODAL */}
+      <Modal
+        title={<Typography sx={{ fontWeight: 700, fontSize: '1.2rem', color: '#2E0845' }}>Add New Food Item to Catalog</Typography>}
+        open={createModalOpen}
+        onOk={submitCreateRecipe}
+        onCancel={() => setCreateModalOpen(false)}
+        okText="Create Recipe"
+        okButtonProps={{ style: { background: '#4CAF50', color: '#fff' } }}
+      >
+        <Form form={createForm} layout="vertical" sx={{ mt: 3 }}>
+          <Form.Item label="Food Item Name" name="name" rules={[{ required: true, message: 'Please enter the food name (e.g. Poha, Tea)' }]}>
+            <Input size="large" placeholder="e.g., Masala Poha" />
+          </Form.Item>
+          <Form.Item name="category" label="Category" initialValue="1" rules={[{ required: true }]}>
+             <Select size="large">
+               <Option value="1">Breakfast Core</Option>
+               <Option value="2">Main Dish</Option>
+               <Option value="3">Side / Dessert / Beverage</Option>
+             </Select>
+          </Form.Item>
         </Form>
       </Modal>
 
@@ -286,10 +334,7 @@ const VisualTimetableEditor = () => {
       >
         <Form form={editForm} layout="vertical" sx={{ mt: 3 }}>
           <Form.Item label="Food Item Name" name="name" rules={[{ required: true }]}>
-            <Input size="large" />
-          </Form.Item>
-          <Form.Item label="Image URL" name="image" rules={[{ required: true }]}>
-             <Input size="large" />
+            <Input size="large" placeholder="e.g. Masala Poha" />
           </Form.Item>
           <Form.Item name="category" label="Cuisine Category" rules={[{ required: true }]}>
              <Select size="large">

@@ -28,6 +28,7 @@ const ApiState = (props) => {
         item.type = item.messageType;
         item.createdAt = item.Date;
         item.isUnRead = !item.read;
+        item.SenderRole = item.SenderRole;
       });
 
       const userJSON = localStorage.getItem('user');

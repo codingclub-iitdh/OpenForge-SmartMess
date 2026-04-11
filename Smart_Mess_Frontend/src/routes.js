@@ -20,6 +20,7 @@ const RatingsPage = lazy(() => import('./pages/RatingsPage'));
 const Suggestions = lazy(() => import('./pages/user/Suggestions'));
 const SuggestionComments = lazy(() => import('./pages/user/SuggestionComments'));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const GuestBookingPage = lazy(() => import('./pages/GuestBookingPage'));
 
 // ----------------------------------------------------------------------
 
@@ -80,6 +81,7 @@ export default function Router() {
         { path: 'addfooditem', element: <ManagerAddFood /> },
         { path: 'feedback', element: <FeedBackForm /> },
         { path: 'announcement', element: <AnnouncementForm /> },
+        { path: 'guestBooking', element: <GuestBookingPage /> },
         {
           path: 'menuPage',
           element: <MyMenuPage />,

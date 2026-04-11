@@ -59,6 +59,12 @@ const navConfig = [
     path: '/dashboard/suggestions',
     icon: icon('ic_issues'),
     roles: ["user", "manager", "secy", "dean", "admin"],
+  },
+  {
+    title: 'Guest Booking',
+    path: '/dashboard/guestBooking',
+    icon: icon('ic_guest'),
+    roles: ["user", "manager", "secy", "dean"],
   }
 ];
 

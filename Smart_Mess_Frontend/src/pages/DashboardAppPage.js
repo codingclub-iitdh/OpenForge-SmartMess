@@ -9,8 +9,8 @@ import RateReviewIcon from '@mui/icons-material/RateReview';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 
-import { getDashTimeTable, getFoodItemRating } from '../utils/apis';
 import { find } from 'lodash';
+import { getDashTimeTable, getFoodItemRating } from '../utils/apis';
 
 const { Meta } = Card;
 
@@ -146,15 +146,8 @@ const MyMenuPage = () => {
                   style={{
                     width: '100%',
                   }}
-                  cover={
-                    <img
-                      style={{ height: '160px', objectFit: 'cover' }}
-                      alt="example"
-                      src={item?.Image}
-                      loading="lazy"
-                    />
-                  }
                 >
+                  <Box sx={{ p: 1 }}>
                   {typeof rating !== 'undefined' ? (
                     <>
                       <Meta title={`${item?.Name}`} />
@@ -174,6 +167,7 @@ const MyMenuPage = () => {
                   ) : (
                     <Meta title={item?.Name} />
                   )}
+                  </Box>
                 </Card>
               </Grid>
             );
@@ -201,15 +195,8 @@ const MyMenuPage = () => {
                   style={{
                     width: '100%',
                   }}
-                  cover={
-                    <img
-                      style={{ height: '160px', objectFit: 'cover' }}
-                      alt="example"
-                      src={item?.Image}
-                      loading="lazy"
-                    />
-                  }
                 >
+                  <Box sx={{ p: 1 }}>
                   {typeof rating !== 'undefined' ? (
                     <>
                       <Meta title={`${item?.Name}`} />
@@ -229,6 +216,7 @@ const MyMenuPage = () => {
                   ) : (
                     <Meta title={item?.Name} />
                   )}
+                  </Box>
                 </Card>
               </Grid>
             );
@@ -255,15 +243,8 @@ const MyMenuPage = () => {
                   style={{
                     width: '100%',
                   }}
-                  cover={
-                    <img
-                      style={{ height: '160px', objectFit: 'cover' }}
-                      alt="example"
-                      src={item?.Image}
-                      loading="lazy"
-                    />
-                  }
                 >
+                  <Box sx={{ p: 1 }}>
                   {typeof rating !== 'undefined' ? (
                     <>
                       <Meta title={`${item?.Name}`} />
@@ -283,6 +264,7 @@ const MyMenuPage = () => {
                   ) : (
                     <Meta title={item?.Name} />
                   )}
+                  </Box>
                 </Card>
               </Grid>
             );
@@ -309,15 +291,8 @@ const MyMenuPage = () => {
                   style={{
                     width: '100%',
                   }}
-                  cover={
-                    <img
-                      style={{ height: '160px', objectFit: 'cover' }}
-                      alt="example"
-                      src={item.Image}
-                      loading="lazy"
-                    />
-                  }
                 >
+                  <Box sx={{ p: 1 }}>
                   {typeof rating !== 'undefined' ? (
                     <>
                       <Meta title={`${item?.Name}`} />
@@ -337,6 +312,7 @@ const MyMenuPage = () => {
                   ) : (
                     <Meta title={item?.Name} />
                   )}
+                  </Box>
                 </Card>
               </Grid>
             );

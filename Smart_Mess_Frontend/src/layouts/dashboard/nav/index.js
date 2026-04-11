@@ -2,10 +2,9 @@ import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 // @mui
-import { styled, alpha } from '@mui/material/styles';
-import { Box, Link, Button, Drawer, Typography, Avatar, Stack } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { Box, Link, Drawer, Typography, Avatar, Stack } from '@mui/material';
 // mock
-import account from '../../../_mock/account';
 // hooks
 import useResponsive from '../../../hooks/useResponsive';
 // components
@@ -45,7 +44,7 @@ export default function Nav({ openNav, onCloseNav }) {
     setUser(user);
     // console.log(user)
     const filterNavData = navConfig.filter((item) => {
-      return item.roles.includes(user.Role) || item.roles.includes('all');
+      return item.roles.includes(user?.Role) || item.roles.includes('all');
     });
     setNavSectionData(filterNavData);
     // setNavSectionData(navConfig)

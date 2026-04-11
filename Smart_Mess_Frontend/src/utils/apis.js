@@ -380,6 +380,144 @@ const submitFoodReview = async (data) => {
   }
 };
 
+export const uploadMenuPdfApi = async (formData) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/uploadMenuPdf`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: formData,
+    });
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const uploadRuleBookApi = async (formData) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/uploadRuleBook`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: formData,
+    });
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const getMenuPdfApi = async () => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/user/dashboard/menuPdf`;
+    let response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    response = await response.json();
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const updateIngredientBrandsApi = async (data) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/updateIngredientBrands`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const getIngredientBrandsApi = async () => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/user/dashboard/ingredients`;
+    let response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    response = await response.json();
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const bookGuestMealApi = async (data) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/user/dashboard/guestBooking`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const getMyGuestBookingsApi = async () => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/user/dashboard/myGuestBookings`;
+    let response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    response = await response.json();
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const getAllGuestBookingsApi = async () => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/guestBookings`;
+    let response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    response = await response.json();
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
 export {
   Signin,
   handleNotification,

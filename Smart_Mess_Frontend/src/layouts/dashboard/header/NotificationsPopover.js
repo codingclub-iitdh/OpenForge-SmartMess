@@ -211,7 +211,16 @@ function NotificationItem({ notification }) {
 function renderContent(notification) {
   const createdAtDate = new Date(notification.createdAt);
 
-  const title = <Typography variant="subtitle2">{notification.title}</Typography>;
+  const title = (
+    <Typography variant="subtitle2">
+      {notification.title}
+      {notification.SenderRole && (
+        <Typography component="span" variant="body2" sx={{ color: '#6c1b85', fontWeight: 600, display: 'block', mt: 0.2 }}>
+           From: {notification.SenderRole}
+        </Typography>
+      )}
+    </Typography>
+  );
 
   return {
     title,

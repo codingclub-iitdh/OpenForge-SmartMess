@@ -9,7 +9,6 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { Button, Container, Typography, Snackbar, Alert } from '@mui/material';
 import Card from '@mui/material/Card';
-import CardMedia from '@mui/material/CardMedia';
 import TextField from '@mui/material/TextField';
 import { wrap } from 'lodash';
 import { Navigate } from 'react-router-dom';
@@ -120,11 +119,6 @@ export default function HoverRating() {
                         <Typography variant="h5" sx={{ mb: 1 }}>
                           Breakfast
                         </Typography>
-                        <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://media.istockphoto.com/id/938158500/photo/breakfast-table.jpg?s=612x612&w=0&k=20&c=Y8xB6hfe4dSPNyNrPgzP7slHbKhWdEzG7YTk2WXu4lQ="
-                          title=""
-                        />
                         <Rating
                           name="breakfast-hover-feedback"
                           value={BreakfastRating}
@@ -145,11 +139,6 @@ export default function HoverRating() {
                         <Typography variant="h5" sx={{ mb: 1 }}>
                           Lunch
                         </Typography>
-                        <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTeRvcdRG6Ahi21BcICuzay8pW1AWdLqvgFOw&usqp=CAU"
-                          title=""
-                        />
                         <Rating
                           name="lunch-hover-feedback"
                           value={LunchRating}
@@ -170,11 +159,6 @@ export default function HoverRating() {
                         <Typography variant="h5" sx={{ mb: 1 }}>
                           Snacks
                         </Typography>
-                        <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQQvV3IWgn7ebaOWxlSIIBUNF19SGTD_Ngyw&usqp=CAU"
-                          title=""
-                        />
                         <Rating
                           name="lunch-hover-feedback"
                           value={SnacksRating}
@@ -195,11 +179,6 @@ export default function HoverRating() {
                         <Typography variant="h5" sx={{ mb: 1 }}>
                           Dinner
                         </Typography>
-                        <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUBWo70RdiTtAadAMbQCFA6E5hEG7W4nQ7rQhpNYKP6grmyhSmuU9_1jDUHk9_hbYBNBc&usqp=CAU"
-                          title=""
-                        />
                         <Rating
                           name="lunch-hover-feedback"
                           value={DinnerRating}
@@ -220,11 +199,6 @@ export default function HoverRating() {
                         <Typography variant="h5" sx={{ mb: 1 }}>
                           Hygiene
                         </Typography>
-                        <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDqjJ4WNV0E0nmCGFLBZYUl_J6uOZyDMHKRA&usqp=CAU"
-                          title=""
-                        />
                         <Rating
                           name="lunch-hover-feedback"
                           value={HygieneRating}
@@ -245,11 +219,6 @@ export default function HoverRating() {
                         <Typography variant="h5" sx={{ mb: 1 }}>
                           Mess service
                         </Typography>
-                        <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQL4DPJnMsIakcrye0Yjrip3JHV29UmMpN9xvj3eHrlfI4Co1kYHN75575xUKXwNan2ci8&usqp=CAU"
-                          title=""
-                        />
                         <Rating
                           name="lunch-hover-feedback"
                           value={MessServiceRating}
