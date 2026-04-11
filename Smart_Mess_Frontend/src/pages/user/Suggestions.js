@@ -76,8 +76,8 @@ const Suggestions = () => {
 
   const fetchAllSuggestions = useCallback(async () => {
     const res = await getAllSuggestions();
-    // console.log({ fetchedSuggestions: res.data.suggestions });
-    setSuggestions(res.data.suggestions.reverse());
+    const suggestionsArray = res?.data?.suggestions || [];
+    setSuggestions(Array.isArray(suggestionsArray) ? [...suggestionsArray].reverse() : []);
   }, []);
 
   useEffect(() => {
@@ -126,34 +126,44 @@ const Suggestions = () => {
           position: 'relative',
         }}
       >
-        <div style={{ display: 'flex', gap: '20px', justifyContent: !media.isMobile ? 'flex-start' : 'space-between' }}>
-          <Typography variant="h4" gutterBottom>
-            Issues
+        <div style={{ display: 'flex', gap: '20px', justifyContent: !media.isMobile ? 'space-between' : 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <Typography variant="h3" gutterBottom sx={{ color: '#2E0845', fontWeight: 800, fontFamily: "'DM Serif Display', serif", m: 0 }}>
+            Community Issues Tracker
           </Typography>
           {/*
         // TODO: Here is the filter component make the UI/UX more user friendly
         */}
           {/* <Filter typeFilter={typeFilter} setTypeFilter={setTypeFilter} /> */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '10px',
-              marginBottom: '20px',
-            }}
-          >
+          <div style={{ display: 'flex', gap: '12px' }}>
             <Button
               variant={statusFilter === 'open' ? 'contained' : 'outlined'}
-              color="primary"
               onClick={() => setStatusFilter('open')}
+              sx={{ 
+                  borderRadius: 8, 
+                  px: 3, py: 1, 
+                  fontWeight: 700,
+                  bgcolor: statusFilter === 'open' ? '#ffad4a' : 'transparent',
+                  color: statusFilter === 'open' ? '#2E0845' : '#ffad4a',
+                  borderColor: '#ffad4a',
+                  '&:hover': { bgcolor: statusFilter === 'open' ? '#e89520' : 'rgba(255,173,74,0.1)', borderColor: '#ffad4a' }
+              }}
             >
-              Open
+              Active Issues
             </Button>
             <Button
               variant={statusFilter === 'closed' ? 'contained' : 'outlined'}
-              color="secondary"
               onClick={() => setStatusFilter('closed')}
+              sx={{ 
+                  borderRadius: 8, 
+                  px: 3, py: 1, 
+                  fontWeight: 700,
+                  bgcolor: statusFilter === 'closed' ? '#4CAF50' : 'transparent',
+                  color: statusFilter === 'closed' ? '#fff' : '#4CAF50',
+                  borderColor: '#4CAF50',
+                  '&:hover': { bgcolor: statusFilter === 'closed' ? '#43A047' : 'rgba(76,175,80,0.1)', borderColor: '#4CAF50' }
+              }}
             >
-              Closed
+              Resolved
             </Button>
           </div>
         </div>
@@ -215,11 +225,11 @@ const Suggestions = () => {
             )}
             {currentSuggestions &&
               currentSuggestions.map((ele) => {
-                return <SuggestionCard suggestions={ele} key={ele._id} setVote={setVote} isMobile={media.isMobile} />;
+                return <SuggestionCard user={user} suggestions={ele} key={ele._id} setVote={setVote} isMobile={media.isMobile} />;
               })}
             {(!currentSuggestions || currentSuggestions.length === 0) && <CustomError>No Suggestions</CustomError>}
           </Container>
-          {user.Role !== 'manager' && (
+          {!['manager', 'admin', 'secy'].includes(user?.Role) && (
             <>
               {media.isLaptop && (
                 <Container

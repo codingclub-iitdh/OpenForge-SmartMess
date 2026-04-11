@@ -112,30 +112,53 @@ export const giveRating = async (req: any, res: Response) => {
     if (!currUser) {
       return res.status(404).send("User Not Found");
     } else {
-      console.log(req.body);
       let foodId = req.body.foodId;
       let eatingMess = currUser.Eating_Mess;
       let rating = req.body.rating;
+
+      // Check if user has already rated this today - needed to calculate average delta
+      const today = dayjs().format('YYYY-MM-DD');
+      const existingUserReview = await dateWiseUserFeedback.findOne({
+        userId: currUser._id,
+        date: today,
+        "ratings.foodId": foodId
+      });
+
       let currItemRating = await foodItemRatings.findOne({
         FoodItem: foodId,
         Mess: eatingMess,
       });
       if (!currItemRating) {
         await __initItemRating(eatingMess?.toString(), foodId);
+        currItemRating = await foodItemRatings.findOne({
+          FoodItem: foodId,
+          Mess: eatingMess,
+        });
       }
-      currItemRating = await foodItemRatings.findOne({
-        FoodItem: foodId,
-        Mess: eatingMess,
-      });
-      console.log(currItemRating);
-      let currRating = currItemRating?.Rating;
-      let currNumReviewes = currItemRating?.NumberOfReviews;
-      let newRating =
-        (currRating! * currNumReviewes! + rating) / (currNumReviewes! + 1);
-      await foodItemRatings.findOneAndUpdate(
-        { FoodItem: foodId, Mess: eatingMess },
-        { Rating: newRating, NumberOfReviews: currNumReviewes! + 1 }
-      );
+
+      let avgRating = currItemRating?.Rating || 0;
+      let numReviews = currItemRating?.NumberOfReviews || 0;
+
+      if (existingUserReview) {
+        // EDIT: Adjust average by delta, don't increase review count
+        const oldRatingEntry = existingUserReview.ratings.find((r: any) => r.foodId.toString() === foodId);
+        const oldRating = oldRatingEntry ? oldRatingEntry.rating : 0;
+        const delta = rating - oldRating;
+
+        const newAvg = ((avgRating * numReviews) + delta) / numReviews;
+        await foodItemRatings.updateOne(
+           { FoodItem: foodId, Mess: eatingMess },
+           { Rating: newAvg }
+        );
+      } else {
+        // NEW: Full average update with review count increment
+        const newRating = (avgRating * numReviews + rating) / (numReviews + 1);
+        await foodItemRatings.updateOne(
+          { FoodItem: foodId, Mess: eatingMess },
+          { Rating: newRating, NumberOfReviews: numReviews + 1 }
+        );
+      }
+      
       return res.status(200).send({ message: "Updated" });
     }
   } catch (err) {
@@ -210,7 +233,7 @@ export const getAllNotifications = async (req: any, res: Response) => {
       Message: notification.Message,
       Date: notification.Date,
       Attachment: notification.Attachment,
-      read: notification.readBy.includes(currUser._id),
+      read: notification.readBy.some((id: any) => id.equals(currUser._id)),
       messageType: "announcement",
       sortParam: notification.Date,
     }));
@@ -222,7 +245,7 @@ export const getAllNotifications = async (req: any, res: Response) => {
         Message: notification.Message,
         Date: notification.Date,
         Attachment: notification.Attachment,
-        read: notification.readBy.includes(currUser._id),
+        read: notification.readBy.some((id: any) => id.equals(currUser._id)),
         messageType: "Mark as resolved",
         sortParam: notification.Date,
       });
@@ -286,11 +309,11 @@ export const makeRead = async (req: any, res: Response) => {
     if (notif) {
       if (type === "Mark as resolved") {
         await usernotifications.findByIdAndUpdate(notif._id, {
-          $addToSet: { readBy: [new mongoose.Types.ObjectId(currUser._id)] },
+          $addToSet: { readBy: currUser._id },
         });
       } else {
         await notifications.findByIdAndUpdate(notif._id, {
-          $addToSet: { readBy: [new mongoose.Types.ObjectId(currUser._id)] },
+          $addToSet: { readBy: currUser._id },
         });
       }
 
@@ -313,13 +336,24 @@ export const makeAllRead = async (req: any, res: Response) => {
       if (element) {
         await notifications.findByIdAndUpdate(element._id, {
           $addToSet: {
-            readBy: new mongoose.Types.ObjectId(currUser._id),
+            readBy: currUser._id,
           },
         });
       }
     });
 
-    await Promise.all(updatePromises);
+    const userNotif = await usernotifications.find({ sendTo: currUser._id });
+    const userUpdatePromises = userNotif.map(async (element) => {
+      if (element) {
+        await usernotifications.findByIdAndUpdate(element._id, {
+          $addToSet: {
+            readBy: currUser._id,
+          },
+        });
+      }
+    });
+
+    await Promise.all([...updatePromises, ...userUpdatePromises]);
 
     return res.status(200).send("Read");
   } catch (err) {
@@ -423,15 +457,25 @@ export const submitFoodReview = async (req: any, res: Response) => {
     const { id, value, comments } = req.body;
     const date = dayjs().format('YYYY-MM-DD');
 
-    const query = { userId: currUser._id, date: date };
-    const newValue = { foodId: id, rating: value, review: comments };
-    console.log(newValue);
-    // Update or create with upsert: true
-    const updateResult = await dateWiseUserFeedback.findOneAndUpdate(query, {
-      $push: { ratings: newValue }
-    }, { upsert: true });
+    const existing = await dateWiseUserFeedback.findOne({
+      userId: currUser._id,
+      date: date,
+      "ratings.foodId": id
+    });
 
-    // Handle successful update/creation
+    if (existing) {
+       await dateWiseUserFeedback.updateOne(
+         { userId: currUser._id, date: date, "ratings.foodId": id },
+         { $set: { "ratings.$.rating": value, "ratings.$.review": comments } }
+       );
+    } else {
+       await dateWiseUserFeedback.findOneAndUpdate(
+         { userId: currUser._id, date: date },
+         { $push: { ratings: { foodId: id, rating: value, review: comments } } },
+         { upsert: true }
+       );
+    }
+
     return res.send({ message: "FeedBack Added" }).status(200);
 
   } catch (err) {

@@ -1,30 +1,12 @@
-import { isValidElement, useCallback, useEffect, useState } from 'react';
-import axios from 'axios';
-import {
-  Container,
-  Paper,
-  TextField,
-  Button,
-  Card,
-  CardMedia,
-  Typography,
-  Rating,
-  FormControl,
-  useMediaQuery,
-} from '@mui/material';
-import { find, get, uniqBy } from 'lodash';
+import { useCallback, useEffect, useState } from 'react';
+import { Container, useMediaQuery } from '@mui/material';
+import { find, uniqBy } from 'lodash';
 import { useNavigate } from 'react-router-dom';
-import SearchIcon from '@mui/icons-material/Search';
 import { allItems, filterTimeTable } from '../../utils/filterTimeTable';
 import { getFoodReviews } from '../../utils/apis';
+import FoodRatingCard from '../../sections/student/ratings/FoodRatingCard';
+import SearchFilter from '../../sections/student/ratings/SearchFilter';
 
-// TODO : Show review in the in the single rating.
-
-/**
- *
- * @param {Array} itemsArray
- * @returns Unique IDs present in the itemsArray
- */
 const uniqueIDs = (itemsArray) => {
   const uniqId = new Set();
   itemsArray.forEach((item) => {
@@ -33,308 +15,56 @@ const uniqueIDs = (itemsArray) => {
   return uniqId;
 };
 
-/**
- *
- * @param {Array} ratings
- * @param {Set} uniqIds
- * @returns Filtered Ratings
- */
-const filterRatings = (ratings, uniqIds) => {
-  const filteredRatings = ratings.filter((ele) => {
-    if (uniqIds.has(ele?.FoodItem)) {
-      return true;
-    }
-    return false;
-  });
-  return filteredRatings;
-};
-
-/**
- *
- * @param {String} id
- * @param {Array} items
- * @returns {String} Name of the food item
- */
-const getItem = (id, items) => {
-  if (items?.length > 0) {
-    const currItem = items?.filter((ele) => {
-      if (ele?._id === id) {
-        return true;
-      }
-      return false;
-    });
-    return currItem[0];
-  }
-  return null;
-};
-
-const Search = (props) => {
-  const { filterString, setFilterString } = props;
-  return (
-    <Paper
-      sx={{
-        display: 'flex',
-        padding: '6px',
-        margin: '5px 20px',
-      }}
-    >
-      <TextField
-        fullWidth
-        label={
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              fontSize: '20px',
-              gap: '5px',
-            }}
-          >
-            Search{' '}
-            <SearchIcon
-              sx={{
-                fontSize: '20px',
-              }}
-            />
-          </div>
-        }
-        variant="standard"
-        value={filterString}
-        onChange={(e) => {
-          setFilterString(e.target.value);
-        }}
-      />
-    </Paper>
-  );
-};
-
-const FoodCard = (props) => {
-  const { item, setRatedFoodItems, ratedItem, isReturn, navigate } = props;
-  const [rating, setRating] = useState(parseInt(props?.ratings?.Rating, 10));
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [comments, setComments] = useState('');
-  const isLargeMobile = useMediaQuery('(max-width:450px)');
-  const handleSubmit = async (e) => {
-    setIsSubmitting(true);
-    e.preventDefault();
-    try {
-      let res = await axios.post(
-        `${process.env.REACT_APP_SERVER_URL}/user/dashboard/giveRating`,
-        {
-          foodId: props?.item?._id,
-          rating,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      res = res.data;
-      res = await axios.post(
-        `${process.env.REACT_APP_SERVER_URL}/user/dashboard/submitFoodReview`,
-        {
-          id: props?.ratings?.FoodItem,
-          value: rating,
-          comments,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      res = await getFoodReviews();
-      if (res?.length > 0) {
-        setRatedFoodItems(res);
-      }
-      res = res.data;
-      if (isReturn) {
-        setIsSubmitting(false);
-        navigate('/dashboard/app');
-      }
-    } catch (err) {
-      const mute = err;
-      console.log(mute);
-    }
-    setIsSubmitting(false);
-  };
-  if (item) {
-    return (
-      <Card
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          width: !isLargeMobile ? '200px' : '250px',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '10px',
-          margin: '10px',
-          gap: '5px',
-          border: `${!ratedItem ? '1px solid lightgray' : ''}`,
-          height: '420px',
-        }}
-      >
-        <CardMedia
-          image={props?.item?.Image}
-          component="img"
-          sx={{
-            borderRadius: '100%',
-            height: '80px',
-            width: '80px',
-            objectFit: 'cover',
-          }}
-          loading="lazy"
-        />
-        <Typography variant="h5" component="p" textAlign="center">
-          {props?.item?.Name?.slice(0, 10)}
-          {props?.item?.Name?.length > 10 ? '...' : ''}
-        </Typography>
-        <Typography variant="body" component="p" textAlign="center">
-          {props?.ratings ? `${parseFloat(props?.ratings?.Rating).toFixed(2)}/5` : 'Unrated'}
-        </Typography>
-        <form
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexDirection: 'column',
-          }}
-          onSubmit={handleSubmit}
-        >
-          <FormControl required>
-            <Rating
-              value={ratedItem ? ratedItem?.rating : rating}
-              name="rating"
-              onChange={(event, newValue) => {
-                setRating(newValue);
-              }}
-              precision={0.2}
-              disabled={ratedItem || isSubmitting}
-            />
-          </FormControl>
-          <FormControl required>
-            <TextField
-              placeholder="Enter Review"
-              multiline
-              maxRows="5"
-              minRows="5"
-              name="comments"
-              value={ratedItem ? ratedItem?.comments : comments}
-              onChange={(e) => {
-                setComments(e.target.value);
-              }}
-              disabled={ratedItem || isSubmitting}
-            />
-          </FormControl>
-          {!ratedItem ? (
-            <Button type="submit" disabled={isSubmitting}>Submit</Button>
-          ) : (
-            <Button type="submit" disabled>
-              Submitted
-            </Button>
-          )}
-        </form>
-      </Card>
-    );
-  }
-  return <></>;
-};
-
-const MobileRatings = (props) => {
-  const { timetable, ratings } = props;
+const MobileRatings = ({ timetable, ratings }) => {
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(window.location.search);
-  const isHidden = searchParams.has('hidden');
-  const isValue = searchParams.has('value');
-  const hidden = isHidden;
-  const value = isValue ? decodeURIComponent(searchParams.get('value')) : null;
-  // console.log({ hidden, value });
+  const hidden = searchParams.has('hidden');
+  const value = searchParams.has('value') ? decodeURIComponent(searchParams.get('value')) : null;
+
   const allFoodItems = allItems(filterTimeTable(timetable));
-  // console.log({allFoodItems});
   const uniqFoodItems = uniqBy(allFoodItems, (ele) => ele?._id);
-  const uniqIds = uniqueIDs(allFoodItems);
-  const filteredRatings = filterRatings(ratings, uniqIds);
-  // console.log(getItem(filteredRatings[0]?.FoodItem, allFoodItems));
-  // console.log({ filteredRatings, allFoodItems });
+  
   const [filterString, setFilterString] = useState('');
   const [ratedFoodItems, setRatedFoodItems] = useState([]);
   const isLargeMobile = useMediaQuery('(max-width:480px)');
+
   const getRatedFoodItems = useCallback(async () => {
     const res = await getFoodReviews();
     setRatedFoodItems(res);
   }, []);
+
   useEffect(() => {
-    let mount = true;
-    if (mount) {
-      getRatedFoodItems();
-      if (hidden) {
-        setFilterString(value);
-      }
+    getRatedFoodItems();
+    if (hidden && value) {
+      setFilterString(value);
     }
-    return () => {
-      mount = false;
-    };
-  }, [getRatedFoodItems]);
+  }, [getRatedFoodItems, hidden, value]);
+
   return (
-    <Container
-      maxWidth="xl"
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        width: '100%',
-        justifyContent: 'center',
-      }}
-      disableGutters
-    >
-      {!hidden && <Search setFilterString={setFilterString} filterString={filterString} />}
-      <div
-        style={{
-          margin: '10px 20px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: !isLargeMobile ? '' : 'center',
-          alignItems: 'baseline',
-        }}
-      >
+    <Container maxWidth="xl" sx={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }} disableGutters>
+      {!hidden && <SearchFilter filterString={filterString} setFilterString={setFilterString} />}
+      
+      <div style={{ margin: '10px 20px', display: 'flex', flexWrap: 'wrap', justifyContent: isLargeMobile ? 'center' : 'flex-start', alignItems: 'baseline' }}>
         {uniqFoodItems.map((foodItem) => {
-          const rating = find(ratings, { FoodItem: foodItem?._id });
-          const ratedItems = find(ratedFoodItems, (item) => get(item, 'foodId._id') === foodItem?._id);
-          // console.log({ ratedItems });
-          if (filterString === '') {
+          const ratingMatch = find(ratings, { FoodItem: foodItem?._id });
+          const alreadyRated = find(ratedFoodItems, (item) => item?.foodId?._id === foodItem?._id);
+
+          const shouldShow = () => {
+             const name = foodItem?.Name?.toLowerCase() || '';
+             const filter = filterString.toLowerCase();
+             if (filter === '') return true;
+             if (hidden) return name === filter;
+             return name.includes(filter);
+          };
+
+          if (shouldShow()) {
             return (
-              <FoodCard
+              <FoodRatingCard
+                key={foodItem?._id}
                 item={foodItem}
-                ratings={rating}
+                ratings={ratingMatch}
                 setRatedFoodItems={setRatedFoodItems}
-                ratedItem={ratedItems}
-                key={foodItem?.FoodItem}
-                isReturn={hidden}
-                navigate={navigate}
-              />
-            );
-          }
-          if (!hidden && filterString !== '' && foodItem?.Name?.toLowerCase().includes(filterString.toLowerCase())) {
-            return (
-              <FoodCard
-                item={foodItem}
-                ratings={rating}
-                setRatedFoodItems={setRatedFoodItems}
-                ratedItem={ratedItems}
-                key={foodItem?.FoodItem}
-                isReturn={hidden}
-                navigate={navigate}
-              />
-            );
-          }
-          if (hidden && filterString !== '' && foodItem?.Name?.toLowerCase() === filterString.toLowerCase()) {
-            return (
-              <FoodCard
-                item={foodItem}
-                ratings={rating}
-                setRatedFoodItems={setRatedFoodItems}
-                ratedItem={ratedItems}
-                key={foodItem?.FoodItem}
+                ratedItem={alreadyRated}
                 isReturn={hidden}
                 navigate={navigate}
               />

@@ -4,6 +4,7 @@ import { alpha } from '@mui/material/styles';
 import { Box, Divider, Typography, Stack, MenuItem, Avatar, IconButton, Popover } from '@mui/material';
 // mocks_
 // import { GoogleLogout } from 'react-google-login';
+import { googleLogout } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import account from '../../../_mock/account';
 
@@ -51,6 +52,7 @@ export default function AccountPopover() {
   };
 
   const handleLogoutSuccess = () => {
+    googleLogout();
     localStorage.removeItem("token")
     localStorage.removeItem("user");
     navigate('/login', { replace: true });

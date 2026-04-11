@@ -199,7 +199,7 @@ export default function RatingsPage() {
 
           <Container maxWidth="xl">
             <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
-              <Typography variant="h4" gutterBottom>
+              <Typography variant="h4" gutterBottom sx={{ color: '#6c1b85', fontWeight: 800, fontFamily: "'DM Serif Display', serif" }}>
                 Ratings
               </Typography>
             </Stack>

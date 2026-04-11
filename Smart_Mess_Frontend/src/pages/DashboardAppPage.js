@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router-dom';
 
 import { Card, Collapse, Spin } from 'antd';
 
-import { Container, Grid, Typography, Rating } from '@mui/material';
+import { Container, Grid, Typography, Rating, Box, Button, Stack, Avatar } from '@mui/material';
+import RateReviewIcon from '@mui/icons-material/RateReview';
+import BugReportIcon from '@mui/icons-material/BugReport';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 import { getDashTimeTable, getFoodItemRating } from '../utils/apis';
 import { find } from 'lodash';
@@ -71,14 +74,17 @@ const MyMenuPage = () => {
 
   const getTimeTableData = async () => {
     setLoading(true);
-    const res = await getDashTimeTable();
-    const ratings = await getFoodItemRating();
-    if (res?.length) {
-      setAllData(res);
+    try {
+      const res = await getDashTimeTable();
+      const ratings = await getFoodItemRating();
+      if (res?.length) {
+        setAllData(res);
+      }
+      setItemRatings(Array.isArray(ratings) ? ratings : []);
+      setTimeTableData(Array.isArray(res) ? res : []);
+    } catch (err) {
+      console.error('Dashboard data fetch error:', err);
     }
-    // console.log(ratings);
-    setItemRatings(ratings);
-    setTimeTableData(res);
     setLoading(false);
   };
   useEffect(() => {
@@ -89,11 +95,12 @@ const MyMenuPage = () => {
     }
   }, []);
 
+  const currentDayIndex = new Date().getDay();
+  const currentDayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
+    currentDayIndex
+  ];
+
   const getCurrentDayMenu = () => {
-    const currentDayIndex = new Date().getDay();
-    const currentDayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
-      currentDayIndex
-    ];
     const reqData = [];
     allData.forEach((item) => {
       if (item.Day === currentDayName) {
@@ -122,9 +129,9 @@ const MyMenuPage = () => {
   const items = [
     {
       key: '1',
-      label: 'Breakfast(07:30AM - 09:00AM)',
+      label: `Breakfast (07:30 AM - ${currentDayIndex === 0 ? '09:45 AM' : '09:30 AM'})`,
       children: (
-        <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 16 }}>
+        <Grid container spacing={2} columns={{ xs: 4, sm: 8, md: 12, lg: 16 }}>
           {currentDayMenu?.Breakfast?.Items?.map((item, index) => {
             const currItemRatingStats = find(itemRating, { FoodItem: item?._id });
             const numberOfReviews = currItemRatingStats?.NumberOfReviews;
@@ -177,9 +184,9 @@ const MyMenuPage = () => {
 
     {
       key: '2',
-      label: 'Lunch(12:30PM - 02:00PM)',
+      label: 'Lunch (12:30 PM - 02:30 PM)',
       children: (
-        <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 16 }}>
+        <Grid container spacing={2} columns={{ xs: 4, sm: 8, md: 12, lg: 16 }}>
           {currentDayMenu?.Lunch?.Items?.map((item, index) => {
             const currItemRatingStats = find(itemRating, { FoodItem: item?._id });
             const numberOfReviews = currItemRatingStats?.NumberOfReviews;
@@ -231,9 +238,9 @@ const MyMenuPage = () => {
     },
     {
       key: '3',
-      label: 'Snacks(04:30PM - 06:00PM)',
+      label: 'Snacks (04:30 PM - 06:00 PM)',
       children: (
-        <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 16 }}>
+        <Grid container spacing={2} columns={{ xs: 4, sm: 8, md: 12, lg: 16 }}>
           {currentDayMenu?.Snacks?.Items?.map((item, index) => {
             const currItemRatingStats = find(itemRating, { FoodItem: item?._id });
             const numberOfReviews = currItemRatingStats?.NumberOfReviews;
@@ -285,9 +292,9 @@ const MyMenuPage = () => {
     },
     {
       key: '4',
-      label: 'Dinner(07:30PM - 09:00PM)',
+      label: 'Dinner (07:30 PM - 09:30 PM)',
       children: (
-        <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 16 }}>
+        <Grid container spacing={2} columns={{ xs: 4, sm: 8, md: 12, lg: 16 }}>
           {currentDayMenu?.Dinner?.Items?.map((item, index) => {
             const currItemRatingStats = find(itemRating, { FoodItem: item?._id });
             const numberOfReviews = currItemRatingStats?.NumberOfReviews;
@@ -341,8 +348,41 @@ const MyMenuPage = () => {
 
   return (
     <>
-      <Container maxWidth="xl">
-        <Typography variant="h4" sx={{ mb: 5 }}>
+      <Container maxWidth="xl" sx={{ mt: -2 }}>
+        {/* HERO SECTION */}
+        <Box sx={{ mb: 5, p: 4, borderRadius: 4, background: 'linear-gradient(135deg, #6c1b85 0%, #2E0845 100%)', color: 'white', position: 'relative', overflow: 'hidden', boxShadow: '0 16px 40px -8px rgba(108,27,133,0.5)' }}>
+            <Box sx={{ position: 'absolute', top: -50, right: -50, width: 250, height: 250, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+            <Box sx={{ position: 'absolute', bottom: -100, right: 100, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,173,74,0.1)' }} />
+            
+            <Typography variant="h3" sx={{ fontWeight: 800, mb: 1, fontFamily: "'DM Serif Display', serif", position: 'relative', zIndex: 1 }}>
+              Welcome back to SmartMess!
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.8, mb: 4, maxWidth: 600, position: 'relative', zIndex: 1 }}>
+              Checkout what's cooking today, drop a review for your favorite meal, or report any issues directly to the mess administration.
+            </Typography>
+            
+            <Stack direction="row" spacing={2} sx={{ position: 'relative', zIndex: 1, flexWrap: 'wrap', gap: 2 }}>
+                <Button 
+                    variant="contained" 
+                    startIcon={<RateReviewIcon />} 
+                    sx={{ bgcolor: '#ffad4a', color: '#2E0845', '&:hover': { bgcolor: '#e89520' }, fontWeight: 700 }}
+                    onClick={() => navigate('/dashboard/ratings')}
+                >
+                    Rate Meal
+                </Button>
+                <Button 
+                    variant="outlined" 
+                    startIcon={<BugReportIcon />} 
+                    sx={{ borderColor: 'rgba(255,255,255,0.5)', color: 'white', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}
+                    onClick={() => navigate('/dashboard/suggestions')}
+                >
+                    Report Issue
+                </Button>
+            </Stack>
+        </Box>
+
+        {/* TODAY'S MENU BLOCK */}
+        <Typography variant="h4" sx={{ mb: 3, color: '#6c1b85', fontWeight: 800, fontFamily: "'DM Serif Display', serif" }}>
           Today's Menu
         </Typography>
         <Spin spinning={loading} size="medium">

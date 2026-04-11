@@ -464,18 +464,23 @@ export const markAsClosedAdmin = async (
 
     if (!currUser) {
       return next(createHttpError(403, "Unauthorized"));
-    } else if (currUser.Role !== "admin" && currUser.Role !== "secy") {
-      // Corrected condition
+    }
+    
+    if (currUser.Role === "admin" || currUser.Role === "secy" || currUser.Role === "manager") {
       const suggestionId = req.body.suggestionId;
+      const officialResponse = req.body.response;
+      const officialAttachment = req.body.image || null;
 
       const updateSuggestion = await SuggestionsModel.updateOne(
         {
           _id: suggestionId,
-          userId: currUser._id,
         },
         {
           $set: {
             status: "closed",
+            officialResponse: officialResponse,
+            officialAttachment: officialAttachment,
+            resolvedByRole: currUser.Role
           },
         }
       );
@@ -504,17 +509,93 @@ export const markAsClosedAdmin = async (
       });
 
       const token = await notificationToken.findOne({ Email: user.Email });
-      if (!token) {
-        return res
-          .status(404)
-          .send({ message: "Notification Token Not Found" });
+      if (token) {
+        await sendNotification(token.Token, title, body);
       }
-
-      await sendNotification(token.Token, title, body);
 
       res.status(204).send({});
     } else {
       return next(createHttpError(403, "Unauthorized to perform this action"));
+    }
+  } catch (err) {
+    console.error(err);
+    next(createHttpError(500, "Internal Server Error"));
+  }
+};
+
+export const reopenSuggestion = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  const loggedInUserData = req.user;
+  try {
+    const currUser = await UserModel.findOne({ Email: loggedInUserData.email });
+    if (!currUser) return next(createHttpError(403, "Unauthorized"));
+
+    const suggestionId = req.body.suggestionId;
+    const editedText = req.body.suggestion;
+
+    const updateSuggestion = await SuggestionsModel.updateOne(
+      {
+        _id: suggestionId,
+        userId: currUser._id,
+      },
+      {
+        $set: {
+          status: "open",
+          suggestion: editedText, 
+        },
+      }
+    );
+
+    if (updateSuggestion.modifiedCount > 0) {
+      return res.status(204).send({});
+    } else {
+      return res.status(404).send({ message: "Not eligible to reopen." });
+    }
+  } catch (err) {
+    console.error(err);
+    next(createHttpError(500, "Internal Server Error"));
+  }
+};
+
+export const voteResolution = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  const loggedInUserData = req.user;
+  try {
+    const currUser = await UserModel.findOne({ Email: loggedInUserData.email });
+    if (!currUser) return next(createHttpError(403, "Unauthorized"));
+
+    const suggestionId = req.body.suggestionId;
+    const updateType =
+      req.body.upvote === true
+        ? {
+            $addToSet: { resolutionUpvotes: currUser._id },
+            $pull: { resolutionDownvotes: currUser._id },
+          }
+        : {
+            $pull: { resolutionUpvotes: currUser._id },
+            $addToSet: { resolutionDownvotes: currUser._id },
+          };
+
+    const newVote = await SuggestionsModel.updateOne(
+      { _id: suggestionId },
+      updateType
+    );
+
+    if (newVote.modifiedCount > 0) {
+       const suggestionData = await SuggestionsModel.findById(suggestionId);
+       return res.send({ 
+          message: "Voted Successfully",
+          resolutionUpvotes: suggestionData?.resolutionUpvotes,
+          resolutionDownvotes: suggestionData?.resolutionDownvotes 
+       });
+    } else {
+      return res.status(400).send({ message: "Vote not casted" });
     }
   } catch (err) {
     console.error(err);

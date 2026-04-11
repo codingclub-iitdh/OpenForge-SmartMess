@@ -6,9 +6,15 @@ export default function Card(theme) {
       styleOverrides: {
         root: {
           boxShadow: theme.customShadows.card,
-          borderRadius: Number(theme.shape.borderRadius) * 2,
+          borderRadius: Number(theme.shape.borderRadius) * 3,
           position: 'relative',
-          zIndex: 0, // Fix Safari overflow: hidden with border radius
+          zIndex: 0,
+          border: '1px solid transparent',
+          transition: 'border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+          '&:hover': {
+            borderColor: 'rgba(108, 27, 133, 0.12)',
+            boxShadow: '0 4px 20px rgba(108, 27, 133, 0.08)',
+          },
         },
       },
     },
@@ -19,14 +25,14 @@ export default function Card(theme) {
       },
       styleOverrides: {
         root: {
-          padding: theme.spacing(3, 3, 0),
+          padding: theme.spacing(2, 2, 0),
         },
       },
     },
     MuiCardContent: {
       styleOverrides: {
         root: {
-          padding: theme.spacing(3),
+          padding: theme.spacing(2),
         },
       },
     },

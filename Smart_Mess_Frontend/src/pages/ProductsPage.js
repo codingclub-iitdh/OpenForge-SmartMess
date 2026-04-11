@@ -103,7 +103,7 @@ export default function HoverRating() {
       {user?.Role === 'manager' && <Navigate to="/404" />}
       {user?.Role === 'user' && (
         <Container maxWidth="xl">
-          <Typography variant="h4" sx={{ mb: 5 }}>
+          <Typography variant="h4" sx={{ mb: 5, color: '#6c1b85', fontWeight: 800, fontFamily: "'DM Serif Display', serif" }}>
             Feedback
           </Typography>
           <div>
@@ -285,7 +285,8 @@ export default function HoverRating() {
             </Box>
             <br />
 
-            <Button variant="contained" justifyContent="center" onClick={handleSubmitPress}>
+            <Button variant="contained" justifyContent="center" onClick={handleSubmitPress}
+              sx={{ backgroundColor: '#6c1b85', '&:hover': { backgroundColor: '#4A0E6B' }, fontWeight: 700, px: 5, py: 1.2, borderRadius: 2, boxShadow: '0 4px 14px rgba(108,27,133,0.24)' }}>
               Submit
             </Button>
           </div>

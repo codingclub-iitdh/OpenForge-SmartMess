@@ -12,6 +12,32 @@ const Suggestions = new Schema({
     enum: ["open", "closed"],
     default: "open",
   },
+  officialResponse: {
+    type: Schema.Types.String,
+    default: null,
+  },
+  officialAttachment: {
+    type: Schema.Types.String,
+    default: null,
+  },
+  resolvedByRole: {
+    type: Schema.Types.String,
+    default: null,
+  },
+  resolutionUpvotes: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "users",
+      default: [],
+    },
+  ],
+  resolutionDownvotes: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "users",
+      default: [],
+    },
+  ],
   upvotes: [
     {
       type: Schema.Types.ObjectId,

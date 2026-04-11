@@ -134,3 +134,51 @@ export const markAsresolved = async (suggestionId) => {
     return null;
   }
 };
+
+export const markAsResolvedAdmin = async (formData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const authToken = `Bearer ${token}`;
+    const res = await axios.post(
+      `${REACT_SERVER_URL}/user/profile/suggestion/resolveAdmin`,
+      formData,
+      {
+        headers: {
+          Authorization: authToken,
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    console.log(res);
+    return res;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+};
+
+export const reopenSuggestionAPI = async (data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const authToken = `Bearer ${token}`;
+    const res = await axios.patch(`${REACT_SERVER_URL}/user/profile/suggestion/reopen`, data, {
+      headers: { Authorization: authToken },
+    });
+    return res;
+  } catch (err) {
+    return null;
+  }
+};
+
+export const voteResolutionAPI = async (data) => {
+  try {
+    const token = localStorage.getItem('token');
+    const authToken = `Bearer ${token}`;
+    const res = await axios.patch(`${REACT_SERVER_URL}/user/profile/suggestion/resolutionVote`, data, {
+      headers: { Authorization: authToken },
+    });
+    return res;
+  } catch (err) {
+    return null;
+  }
+};

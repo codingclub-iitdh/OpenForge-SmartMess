@@ -7,7 +7,7 @@ const handleAuthError = () => {
   window.location.href = process.env.REACT_APP_CLIENT_URL;
 };
 
-const Signin = async (code) => {
+const Signin = async (code, requestedRole = 'user') => {
   try {
     const url = `${process.env.REACT_APP_SERVER_URL}/auth/signin/web`;
 
@@ -16,7 +16,7 @@ const Signin = async (code) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ authCode: code }),
+      body: JSON.stringify({ authCode: code, requestedRole }),
     });
     // console.log(response);
     return response;
@@ -98,12 +98,14 @@ const getDashTimeTable = async () => {
       },
     });
     if (response.status === 401) {
-      handleAuthError();
+      console.warn('getDashTimeTable: 401 Unauthorized');
+      return [];
     }
     response = await response.json();
     return response;
   } catch (err) {
     console.log(err);
+    return [];
   }
 };
 
@@ -157,6 +159,40 @@ const createFoodItem = async (data) => {
     });
     console.log(response);
     console.log(data);
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+};
+
+const updateFoodItemApi = async (data) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/updateFoodItem`;
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+};
+
+const deleteFoodItemApi = async (id) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/deleteFoodItem/${id}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
     return response;
   } catch (err) {
     console.log(err);
@@ -234,7 +270,8 @@ const getFoodItemRating = async () => {
       },
     });
     if (response.status === 401) {
-      handleAuthError();
+      console.warn('getFoodItemRating: 401 Unauthorized');
+      return [];
     }
     return await response.json();
   } catch (error) {
@@ -313,7 +350,8 @@ const getFoodReviews = async () => {
     });
     res = await res.json();
     if (res.status === 401) {
-      handleAuthError();
+      console.warn('getFoodReviews: 401 Unauthorized');
+      return [];
     }
     return res;
   } catch (err) {
@@ -358,4 +396,6 @@ export {
   addAnnouncementForm,
   getFoodReviews,
   submitFoodReview,
+  updateFoodItemApi,
+  deleteFoodItemApi
 };

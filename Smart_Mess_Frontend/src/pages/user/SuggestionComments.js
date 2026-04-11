@@ -26,6 +26,18 @@ const SuggestionComment = () => {
     isTablet: useMediaQuery('(min-width:427px)') && useMediaQuery('(max-width:1022px)'),
     isMobile: useMediaQuery('(max-width:426px)'),
   };
+  
+  const [user, setUser] = useState({});
+  useEffect(() => {
+    try {
+      let storedUser = localStorage.getItem('user');
+      if (storedUser) {
+         setUser(JSON.parse(storedUser));
+      }
+    } catch (error) {
+      console.log('error fetching user');
+    }
+  }, []);
 
   const socket = useContext(SocketContext);
   // Vote Logic
@@ -170,7 +182,7 @@ const SuggestionComment = () => {
               {(!suggestionComment || suggestionComment.length === 0) && <CustomError>No Comments</CustomError>} */}
               {suggestionComment && suggestionComment.children  ? (
     <>
-      <SuggestionCard suggestions={suggestionComment} key={suggestionId} setVote={setVote} discusson={true} />
+      <SuggestionCard user={user} suggestions={suggestionComment} key={suggestionId} setVote={setVote} discusson={true} />
       {suggestionComment.children.map((ele) => (
         <CommentCard comments={ele} key={ele._id} setVote={setVote} />
       ))}
@@ -181,7 +193,7 @@ const SuggestionComment = () => {
 }
   
           </Container>
-          {media.isLaptop && (
+          {media.isLaptop && !['manager', 'admin', 'secy'].includes(user?.Role) && (
             <Container
               sx={{ flex: 2, maxHeight: '94vh', height: '94vh', overflow: 'scroll' }}
               className="hideScrollBar"
@@ -189,7 +201,7 @@ const SuggestionComment = () => {
               <UserActionsListComment Id={suggestionId} />
             </Container>
           )}
-          {!media.isLaptop && (
+          {!media.isLaptop && !['manager', 'admin', 'secy'].includes(user?.Role) && (
             <>
               <Fab
                 sx={{

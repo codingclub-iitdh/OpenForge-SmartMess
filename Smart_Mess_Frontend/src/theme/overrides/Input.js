@@ -54,6 +54,14 @@ export default function Input(theme) {
         root: {
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: alpha(theme.palette.grey[500], 0.32),
+            transition: 'border-color 0.2s ease-in-out',
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.light,
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main,
+            boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.12)}`,
           },
           '&.Mui-disabled': {
             '& .MuiOutlinedInput-notchedOutline': {

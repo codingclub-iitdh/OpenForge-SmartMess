@@ -24,41 +24,46 @@ export function responsiveFontSizes({ sm, md, lg }) {
 
 // ----------------------------------------------------------------------
 
-const FONT_PRIMARY = 'Public Sans, sans-serif'; // Google Font
-// const FONT_SECONDARY = 'CircularStd, sans-serif'; // Local Font
+const FONT_PRIMARY = "'DM Sans', 'Inter', 'Roboto', 'Public Sans', sans-serif";
+const FONT_HEADING = "'DM Serif Display', 'Georgia', serif";
 
 const typography = {
   fontFamily: FONT_PRIMARY,
   fontWeightRegular: 400,
-  fontWeightMedium: 600,
+  fontWeightMedium: 500,
   fontWeightBold: 700,
   h1: {
-    fontWeight: 800,
+    fontFamily: FONT_HEADING,
+    fontWeight: 400,
     lineHeight: 80 / 64,
     fontSize: pxToRem(40),
+    letterSpacing: '-0.5px',
     ...responsiveFontSizes({ sm: 52, md: 58, lg: 64 }),
   },
   h2: {
-    fontWeight: 800,
+    fontFamily: FONT_HEADING,
+    fontWeight: 400,
     lineHeight: 64 / 48,
     fontSize: pxToRem(32),
+    letterSpacing: '-0.3px',
     ...responsiveFontSizes({ sm: 40, md: 44, lg: 48 }),
   },
   h3: {
-    fontWeight: 700,
+    fontFamily: FONT_HEADING,
+    fontWeight: 400,
     lineHeight: 1.5,
     fontSize: pxToRem(24),
     ...responsiveFontSizes({ sm: 26, md: 30, lg: 32 }),
   },
   h4: {
     fontWeight: 700,
-    lineHeight: 1.5,
+    lineHeight: 1.3,
     fontSize: pxToRem(20),
     ...responsiveFontSizes({ sm: 20, md: 24, lg: 24 }),
   },
   h5: {
     fontWeight: 700,
-    lineHeight: 1.5,
+    lineHeight: 1.3,
     fontSize: pxToRem(18),
     ...responsiveFontSizes({ sm: 19, md: 20, lg: 20 }),
   },

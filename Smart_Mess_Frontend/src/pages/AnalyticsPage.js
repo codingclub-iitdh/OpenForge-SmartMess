@@ -26,7 +26,7 @@ function AnalyticsPage() {
     <>
      
       <Container maxWidth="lg" sx={{  mb: 4 }}>
-      <Typography variant="h4" component="h2" gutterBottom>
+      <Typography variant="h4" component="h2" gutterBottom sx={{ color: '#6c1b85', fontWeight: 800, fontFamily: "'DM Serif Display', serif" }}>
             Analytics
           </Typography>
          
@@ -39,6 +39,8 @@ function AnalyticsPage() {
         display: 'flex',
         flexDirection: 'column',
         height: 240,
+        border: '1px solid rgba(108, 27, 133, 0.1)',
+        borderRadius: 3,
       }}
     >
       <Chart />
@@ -52,6 +54,8 @@ function AnalyticsPage() {
                     display: 'flex',
                     flexDirection: 'column',
                     height: 240,
+                    border: '1px solid rgba(108, 27, 133, 0.1)',
+                    borderRadius: 3,
                   }}
                 >
                   <UsersRegistered activeUsers={9} />
@@ -64,7 +68,8 @@ function AnalyticsPage() {
         p: 2,
         display: 'flex',
         flexDirection: 'column',
-       
+        border: '1px solid rgba(108, 27, 133, 0.1)',
+        borderRadius: 3,
       }}
     >
       <AverageRatingsChart />

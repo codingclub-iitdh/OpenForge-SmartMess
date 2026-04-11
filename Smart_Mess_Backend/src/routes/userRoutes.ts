@@ -23,6 +23,9 @@ import {
   postSuggestionComment,
   voteSuggestionComment,
   markAsClosed,
+  markAsClosedAdmin,
+  reopenSuggestion,
+  voteResolution,
   getOneSuggestion,
 } from "../controllers/UserControllers/user.suggestions.controller";
 import {
@@ -89,5 +92,14 @@ userRouter.patch("/profile/suggestion/comment", patchSuggestionComment);
 userRouter.post("/profile/suggestion/deleteComment", deleteSuggestionComment);
 
 userRouter.patch("/profile/suggestion/markAsClosed", markAsClosed);
+userRouter.patch("/profile/suggestion/reopen", reopenSuggestion);
+userRouter.patch("/profile/suggestion/resolutionVote", voteResolution);
+
+userRouter.post(
+  "/profile/suggestion/resolveAdmin",
+  upload.single("image"),
+  uploadToCloudinary,
+  markAsClosedAdmin
+);
 
 export default userRouter;

@@ -17,8 +17,10 @@ const ApiState = (props) => {
         },
       });
 
-      response = await response.json();
-      response.forEach((item) => {
+      const data = await response.json();
+      const safeData = Array.isArray(data) ? data : [];
+
+      safeData.forEach((item) => {
         item.id = item._id;
         item.title = item.Title;
         item.description = item.Description;
@@ -29,14 +31,14 @@ const ApiState = (props) => {
       });
 
       const userJSON = localStorage.getItem('user');
-      let filteredResponse = response;
+      let filteredResponse = safeData;
 
       console.log('filteredResponse', filteredResponse);
 
       if (userJSON) {
         const user = JSON.parse(userJSON);
         if (user.Role === 'manager') {
-          filteredResponse = response.filter((item) => item.type !== 'feedback');
+          filteredResponse = safeData.filter((item) => item.type !== 'feedback');
         }
       }
       setNotifications(filteredResponse);

@@ -7,18 +7,6 @@ import SimpleLayout from './layouts/simple';
 import ApiContext from './Context/apiContext';
 import { Backdrop } from '@mui/material';
 
-// import LoginPage from './pages/LoginPage';
-// import Page404 from './pages/Page404';
-// import ProductsPage from './pages/ProductsPage';
-// import DashboardAppPage from './pages/DashboardAppPage';
-// import ManagerAddFood from './pages/ManagerAddFood';
-// import FeedBackForm from './pages/FeedBackForm';
-// import ManagerDashboard from './pages/ManagerDashboard';
-// import AnnouncementForm from './pages/Announcement';
-// import AnalyticsPage from './pages/AnalyticsPage';
-// import Suggestions from './pages/user/Suggestions';
-// import SuggestionComments from './pages/user/SuggestionComments';
-
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const Page404 = React.lazy(() => import('./pages/Page404'));
 const ProductsPage = React.lazy(() => import('./pages/ProductsPage'));
@@ -35,17 +23,36 @@ const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
 
 // ----------------------------------------------------------------------
 
+const DashboardIndexRedirect = () => {
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      if (['manager', 'secy', 'dean'].includes(user.Role)) {
+        return <Navigate to="/dashboard/summary" replace />;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  return <Navigate to="/dashboard/app" replace />;
+};
+
 export default function Router() {
   const context = useContext(ApiContext);
   const { getAllNotificatons } = context;
 
   useEffect(() => {
-    getAllNotificatons();
+    if (localStorage.getItem('token')) {
+      getAllNotificatons();
+    }
     navigator.serviceWorker.addEventListener('message', (event) => {
       const message = event.data;
       if (message.type === 'notification') {
         console.log('communication from service worker');
-        getAllNotificatons();
+        if (localStorage.getItem('token')) {
+          getAllNotificatons();
+        }
       }
     });
   }, []);
@@ -56,14 +63,14 @@ export default function Router() {
       path: '/dashboard',
       element: <DashboardLayout />,
       children: [
-        { element: <Navigate to="/dashboard/app" />, index: true },
+        { element: <DashboardIndexRedirect />, index: true },
         { path: 'app', element: <DashboardAppPage /> },
         // { path: 'menu', element: <MenuPage /> },
         { path: 'products', element: <ProductsPage /> },
         {
           path: 'ratings',
           element: (
-            <Suspense fallback={<Backdrop />}>
+            <Suspense fallback={<Backdrop open={false} />}>
               <RatingsPage />
             </Suspense>
           ),
@@ -88,7 +95,11 @@ export default function Router() {
     },
     {
       path: 'login',
-      element: <LoginPage />,
+      children: [
+        { index: true, element: <LoginPage /> },
+        { path: 'manager', element: <Navigate to="/login" replace /> },
+        { path: 'dean', element: <Navigate to="/login" replace /> },
+      ],
     },
     {
       element: <SimpleLayout />,
