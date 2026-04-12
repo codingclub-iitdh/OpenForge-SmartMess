@@ -15,9 +15,15 @@ const config = {
     "universe_domain": "googleapis.com"
 }
 
-admin.initializeApp({
-    credential: admin.credential.cert(config as admin.ServiceAccount),
-});
+try {
+    admin.initializeApp({
+        credential: admin.credential.cert(config as admin.ServiceAccount),
+    });
+    console.log("Firebase Admin Initialized Successfully");
+} catch (error) {
+    console.error("Firebase Admin failed to initialize. Notifications will not work. Check your .env setup.");
+}
+
 
 
 export const sendNotification = async (token: string, title: string, body: string) => {

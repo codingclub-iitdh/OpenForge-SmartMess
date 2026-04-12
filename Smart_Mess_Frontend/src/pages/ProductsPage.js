@@ -7,11 +7,9 @@ import StarIcon from '@mui/icons-material/Star';
 import { Helmet } from 'react-helmet-async';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
-import { Button, Container, Typography, Snackbar, Alert } from '@mui/material';
+import { Button, CardActions, CardMedia, Chip, Container, Typography, Snackbar, Alert, Stack } from '@mui/material';
 import Card from '@mui/material/Card';
-import CardMedia from '@mui/material/CardMedia';
 import TextField from '@mui/material/TextField';
-import { wrap } from 'lodash';
 import { Navigate } from 'react-router-dom';
 import ApiContext from '../Context/apiContext';
 import { submitFeedback } from '../utils/apis';
@@ -33,6 +31,7 @@ export default function HoverRating() {
   const [MessServiceRating, setmessServiceRatings] = React.useState(null);
   const [Comments, setcomments] = React.useState(null);
   const [user, setUser] = useState({});
+  const [currentAverages, setCurrentAverages] = useState(null);
   const getUser = async () => {
     let user = await localStorage.getItem('user');
     user = await JSON.parse(user);
@@ -48,6 +47,90 @@ export default function HoverRating() {
       console.log('error');
     }
   }, []);
+
+  useEffect(() => {
+    const fetchCurrentAverages = async () => {
+      try {
+        const url = `${process.env.REACT_APP_SERVER_URL}/running-average-ratings`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setCurrentAverages(Array.isArray(data) && data.length > 0 ? data[data.length - 1] : null);
+      } catch (error) {
+        console.error('Failed to fetch current ratings:', error.message);
+      }
+    };
+
+    fetchCurrentAverages();
+  }, []);
+
+  const formatAverage = (value) => {
+    if (value === null || value === undefined || Number.isNaN(Number(value))) {
+      return 'No ratings yet';
+    }
+
+    return `${Number(value).toFixed(1)} / 5`;
+  };
+
+  const ratingCards = [
+    {
+      key: 'Breakfast',
+      image: 'https://media.istockphoto.com/id/938158500/photo/breakfast-table.jpg?s=612x612&w=0&k=20&c=Y8xB6hfe4dSPNyNrPgzP7slHbKhWdEzG7YTk2WXu4lQ=',
+      value: BreakfastRating,
+      setter: setBreakfastRatings,
+      average: currentAverages?.RunningAverageBreakfastRating,
+      name: 'breakfast-hover-feedback',
+    },
+    {
+      key: 'Lunch',
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTeRvcdRG6Ahi21BcICuzay8pW1AWdLqvgFOw&usqp=CAU',
+      value: LunchRating,
+      setter: setLunchRatings,
+      average: currentAverages?.RunningAverageLunchRating,
+      name: 'lunch-hover-feedback',
+    },
+    {
+      key: 'Snacks',
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQQvV3IWgn7ebaOWxlSIIBUNF19SGTD_Ngyw&usqp=CAU',
+      value: SnacksRating,
+      setter: setsnacksRatings,
+      average: currentAverages?.RunningAverageSnacksRating,
+      name: 'snacks-hover-feedback',
+    },
+    {
+      key: 'Dinner',
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUBWo70RdiTtAadAMbQCFA6E5hEG7W4nQ7rQhpNYKP6grmyhSmuU9_1jDUHk9_hbYBNBc&usqp=CAU',
+      value: DinnerRating,
+      setter: setdinnerRatings,
+      average: currentAverages?.RunningAverageDinnerRating,
+      name: 'dinner-hover-feedback',
+    },
+    {
+      key: 'Hygiene',
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDqjJ4WNV0E0nmCGFLBZYUl_J6uOZyDMHKRA&usqp=CAU',
+      value: HygieneRating,
+      setter: sethygieneRatings,
+      average: currentAverages?.RunningAverageHygieneRating,
+      name: 'hygiene-hover-feedback',
+    },
+    {
+      key: 'Mess Service',
+      image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQL4DPJnMsIakcrye0Yjrip3JHV29UmMpN9xvj3eHrlfI4Co1kYHN75575xUKXwNan2ci8&usqp=CAU',
+      value: MessServiceRating,
+      setter: setmessServiceRatings,
+      average: currentAverages?.RunningAverageMessServiceRating,
+      name: 'mess-service-hover-feedback',
+    },
+  ];
 
   const handleSubmitPress = async () => {
     if (!BreakfastRating || !LunchRating || !SnacksRating || !DinnerRating || !HygieneRating || !MessServiceRating) {
@@ -103,7 +186,7 @@ export default function HoverRating() {
       {user?.Role === 'manager' && <Navigate to="/404" />}
       {user?.Role === 'user' && (
         <Container maxWidth="xl">
-          <Typography variant="h4" sx={{ mb: 5 }}>
+          <Typography variant="h4" sx={{ mb: 5, color: '#6c1b85', fontWeight: 800, fontFamily: "'DM Serif Display', serif" }}>
             Feedback
           </Typography>
           <div>
@@ -112,157 +195,87 @@ export default function HoverRating() {
             </Helmet>
 
             <Box sx={{ flexGrow: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Box
+                sx={{
+                  mb: 4,
+                  p: { xs: 2, md: 3 },
+                  borderRadius: 4,
+                  border: '1px solid rgba(108, 27, 133, 0.12)',
+                  background: 'linear-gradient(135deg, rgba(108,27,133,0.08) 0%, rgba(255,202,117,0.16) 100%)',
+                  boxShadow: '0 12px 30px rgba(108,27,133,0.08)',
+                }}
+              >
+                <Stack spacing={1.5}>
+                  <Typography variant="h5" sx={{ color: '#4b0f61', fontWeight: 800, fontFamily: "'DM Serif Display', serif" }}>
+                    Current Student Ratings
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: '#6e5a77' }}>
+                    Live average ratings are visible here for every meal, hygiene, and mess service category.
+                  </Typography>
+                  <Stack direction="row" spacing={1.2} useFlexGap flexWrap="wrap">
+                    {ratingCards.map((item) => (
+                      <Chip
+                        key={item.key}
+                        label={`${item.key}: ${formatAverage(item.average)}`}
+                        sx={{
+                          px: 1,
+                          py: 2.6,
+                          borderRadius: 999,
+                          bgcolor: '#fff',
+                          color: '#5c176e',
+                          border: '1px solid rgba(92, 23, 110, 0.15)',
+                          fontWeight: 700,
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                </Stack>
+              </Box>
               <Grid container alignItems="center" justifyContent="center" spacing={2}>
-                <Grid item alignItems="center" justifyContent="center" xs={12} lg={4} md={6}>
-                  <Item>
-                    <Card sx={{ maxWidth: 345 }}>
-                      <Container>
-                        <Typography variant="h5" sx={{ mb: 1 }}>
-                          Breakfast
-                        </Typography>
+                {ratingCards.map((item) => (
+                  <Grid key={item.key} item alignItems="center" justifyContent="center" xs={12} lg={4} md={6}>
+                    <Item sx={{ borderRadius: 4, overflow: 'hidden' }}>
+                      <Card sx={{ maxWidth: 345, borderRadius: 4, boxShadow: '0 18px 36px rgba(108,27,133,0.08)' }}>
                         <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://media.istockphoto.com/id/938158500/photo/breakfast-table.jpg?s=612x612&w=0&k=20&c=Y8xB6hfe4dSPNyNrPgzP7slHbKhWdEzG7YTk2WXu4lQ="
-                          title=""
+                          sx={{ height: 170 }}
+                          image={item.image}
+                          title={item.key}
                         />
-                        <Rating
-                          name="breakfast-hover-feedback"
-                          value={BreakfastRating}
-                          precision={1}
-                          onChange={(event, newValue) => {
-                            setBreakfastRatings(newValue);
-                          }}
-                          emptyIcon={<StarIcon style={{ opacity: 0.45 }} fontSize="inherit" />}
-                        />
-                      </Container>
-                    </Card>
-                  </Item>
-                </Grid>
-                <Grid item xs={12} lg={4} md={6}>
-                  <Item>
-                    <Card sx={{ maxWidth: 345 }}>
-                      <Container>
-                        <Typography variant="h5" sx={{ mb: 1 }}>
-                          Lunch
-                        </Typography>
-                        <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTeRvcdRG6Ahi21BcICuzay8pW1AWdLqvgFOw&usqp=CAU"
-                          title=""
-                        />
-                        <Rating
-                          name="lunch-hover-feedback"
-                          value={LunchRating}
-                          precision={1}
-                          onChange={(event, newValue) => {
-                            setLunchRatings(newValue);
-                          }}
-                          emptyIcon={<StarIcon style={{ opacity: 0.45 }} fontSize="inherit" />}
-                        />
-                      </Container>
-                    </Card>
-                  </Item>
-                </Grid>
-                <Grid item xs={12} lg={4} md={6}>
-                  <Item>
-                    <Card sx={{ maxWidth: 345 }}>
-                      <Container>
-                        <Typography variant="h5" sx={{ mb: 1 }}>
-                          Snacks
-                        </Typography>
-                        <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQQvV3IWgn7ebaOWxlSIIBUNF19SGTD_Ngyw&usqp=CAU"
-                          title=""
-                        />
-                        <Rating
-                          name="lunch-hover-feedback"
-                          value={SnacksRating}
-                          precision={1}
-                          onChange={(event, newValue) => {
-                            setsnacksRatings(newValue);
-                          }}
-                          emptyIcon={<StarIcon style={{ opacity: 0.45 }} fontSize="inherit" />}
-                        />
-                      </Container>
-                    </Card>
-                  </Item>
-                </Grid>
-                <Grid item xs={12} lg={4} md={6}>
-                  <Item>
-                    <Card sx={{ maxWidth: 345 }}>
-                      <Container>
-                        <Typography variant="h5" sx={{ mb: 1 }}>
-                          Dinner
-                        </Typography>
-                        <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUBWo70RdiTtAadAMbQCFA6E5hEG7W4nQ7rQhpNYKP6grmyhSmuU9_1jDUHk9_hbYBNBc&usqp=CAU"
-                          title=""
-                        />
-                        <Rating
-                          name="lunch-hover-feedback"
-                          value={DinnerRating}
-                          precision={1}
-                          onChange={(event, newValue) => {
-                            setdinnerRatings(newValue);
-                          }}
-                          emptyIcon={<StarIcon style={{ opacity: 0.45 }} fontSize="inherit" />}
-                        />
-                      </Container>
-                    </Card>
-                  </Item>
-                </Grid>
-                <Grid item xs={12} lg={4} md={6}>
-                  <Item>
-                    <Card sx={{ maxWidth: 345 }}>
-                      <Container>
-                        <Typography variant="h5" sx={{ mb: 1 }}>
-                          Hygiene
-                        </Typography>
-                        <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDqjJ4WNV0E0nmCGFLBZYUl_J6uOZyDMHKRA&usqp=CAU"
-                          title=""
-                        />
-                        <Rating
-                          name="lunch-hover-feedback"
-                          value={HygieneRating}
-                          precision={1}
-                          onChange={(event, newValue) => {
-                            sethygieneRatings(newValue);
-                          }}
-                          emptyIcon={<StarIcon style={{ opacity: 0.45 }} fontSize="inherit" />}
-                        />
-                      </Container>
-                    </Card>
-                  </Item>
-                </Grid>
-                <Grid item xs={12} lg={4} md={6}>
-                  <Item>
-                    <Card sx={{ maxWidth: 345 }}>
-                      <Container>
-                        <Typography variant="h5" sx={{ mb: 1 }}>
-                          Mess service
-                        </Typography>
-                        <CardMedia
-                          sx={{ height: 140 }}
-                          image="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQL4DPJnMsIakcrye0Yjrip3JHV29UmMpN9xvj3eHrlfI4Co1kYHN75575xUKXwNan2ci8&usqp=CAU"
-                          title=""
-                        />
-                        <Rating
-                          name="lunch-hover-feedback"
-                          value={MessServiceRating}
-                          precision={1}
-                          onChange={(event, newValue) => {
-                            setmessServiceRatings(newValue);
-                          }}
-                          emptyIcon={<StarIcon style={{ opacity: 0.45 }} fontSize="inherit" />}
-                        />
-                      </Container>
-                    </Card>
-                  </Item>
-                </Grid>
+                        <Container sx={{ py: 2.5 }}>
+                          <Stack spacing={1.5}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+                              <Typography variant="h5" sx={{ color: '#4b0f61', fontWeight: 800, fontFamily: "'DM Serif Display', serif" }}>
+                                {item.key}
+                              </Typography>
+                              <Chip
+                                label={`Current: ${formatAverage(item.average)}`}
+                                sx={{
+                                  bgcolor: 'rgba(255,204,115,0.22)',
+                                  color: '#7a1f5c',
+                                  fontWeight: 700,
+                                }}
+                              />
+                            </Stack>
+                            <Typography variant="body2" sx={{ color: '#7a6a86' }}>
+                              Students can see the current average before submitting today&apos;s rating.
+                            </Typography>
+                          </Stack>
+                        </Container>
+                        <CardActions sx={{ px: 3, pb: 3, pt: 0 }}>
+                          <Rating
+                            name={item.name}
+                            value={item.value}
+                            precision={1}
+                            onChange={(event, newValue) => {
+                              item.setter(newValue);
+                            }}
+                            emptyIcon={<StarIcon style={{ opacity: 0.45 }} fontSize="inherit" />}
+                          />
+                        </CardActions>
+                      </Card>
+                    </Item>
+                  </Grid>
+                ))}
               </Grid>
             </Box>
 
@@ -285,7 +298,8 @@ export default function HoverRating() {
             </Box>
             <br />
 
-            <Button variant="contained" justifyContent="center" onClick={handleSubmitPress}>
+            <Button variant="contained" justifyContent="center" onClick={handleSubmitPress}
+              sx={{ backgroundColor: '#6c1b85', '&:hover': { backgroundColor: '#4A0E6B' }, fontWeight: 700, px: 5, py: 1.2, borderRadius: 2, boxShadow: '0 4px 14px rgba(108,27,133,0.24)' }}>
               Submit
             </Button>
           </div>

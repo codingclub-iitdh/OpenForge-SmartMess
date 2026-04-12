@@ -1,312 +1,267 @@
-import React, { useCallback, useEffect, useState, useContext } from 'react';
-import { useLinkClickHandler, useNavigate } from 'react-router-dom';
-import { Chip, Container, Typography, Button, Fab, Drawer } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import Pagination from '@mui/material/Pagination';
-import Stack from '@mui/material/Stack';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  Box,
+  Button,
+  Card,
+  Chip,
+  Container,
+  Drawer,
+  Fab,
+  Stack,
+  Typography,
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
+import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { SocketContext } from '../../Context/socket';
-import DehazeIcon from '@mui/icons-material/Dehaze';
 import SuggestionCard from './Suggestions/SuggestionCards';
-import './index.css';
 import UserActionsList from './Suggestions/UserActionList';
 import { getAllSuggestions } from './apis';
 import CustomError from '../CustomErrorMessage';
-import Filter from './Suggestions/Filter';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import Dehaze from '@mui/icons-material/Dehaze';
-import CloseIcon from '@mui/icons-material/Close';
 
 const Suggestions = () => {
-  const navigate = useNavigate();
+  const socket = useContext(SocketContext);
+  const isLaptop = useMediaQuery('(min-width:1024px)');
+  const isMobile = useMediaQuery('(max-width:640px)');
   const [suggestions, setSuggestions] = useState([]);
-  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('open'); // Default to showing open suggestions
-  const [typeFilter, setTypeFilter] = useState('');
-  const [isDrawarOpen, setIsDrawarOpen] = useState(false);
-  const media = {
-    isLaptop: useMediaQuery('(min-width:1023px)'),
-    isTablet: useMediaQuery('(min-width:427px)') && useMediaQuery('(max-width:1022px)'),
-    isMobile: useMediaQuery('(max-width:426px)'),
-  };
-  const [user, setUser] = React.useState({});
-  const getUser = async () => {
-    let user = await localStorage.getItem('user');
-    user = await JSON.parse(user);
-    setUser(user);
-  };
+  const [statusFilter, setStatusFilter] = useState('open');
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [updates, setUpdates] = useState(false);
+  const [user, setUser] = useState({});
 
   useEffect(() => {
     try {
-      getUser();
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
     } catch (error) {
       console.log('error');
     }
   }, []);
-  // console.log(media);
-  const theme = useTheme();
-  const socket = useContext(SocketContext);
-  // Vote Logic
-  const [vote, setVote] = useState(null);
-  const [updates, setUpdates] = useState(false);
-
-  const socket_RemoveSuggestion = useCallback((deletedSuggestion) => {
-    console.log({ deletedSuggestion });
-    setSuggestions((suggestions) => {
-      return suggestions.filter((ele) => {
-        return ele._id != deletedSuggestion._id;
-      });
-    });
-  }, []);
-
-  useEffect(() => {
-    let mount = true;
-    if (mount) {
-      socket.on('delete-suggestion', (deletedSuggestion) => {
-        socket_RemoveSuggestion(deletedSuggestion);
-      });
-      socket.on('new-post', () => {
-        setUpdates(true);
-      });
-    }
-    return () => {
-      mount = false;
-      // socket.off();
-    };
-  }, [vote, socket, socket_RemoveSuggestion, setUpdates]);
 
   const fetchAllSuggestions = useCallback(async () => {
     const res = await getAllSuggestions();
-    // console.log({ fetchedSuggestions: res.data.suggestions });
-    setSuggestions(res.data.suggestions.reverse());
+    const suggestionsArray = res?.data?.suggestions || [];
+    const orderedSuggestions = Array.isArray(suggestionsArray)
+      ? [...suggestionsArray].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      : [];
+    setSuggestions(orderedSuggestions);
   }, []);
 
   useEffect(() => {
-    let mount = true;
-    if (mount === true) {
-      fetchAllSuggestions();
-    }
-    return () => {
-      mount = false;
-    };
+    fetchAllSuggestions();
   }, [fetchAllSuggestions]);
 
-  // TODO:Add filter option for the manager
   useEffect(() => {
-    // Whenever suggestions or statusFilter changes, filter suggestions
+    socket.on('delete-suggestion', (deletedSuggestion) => {
+      setSuggestions((current) => current.filter((entry) => entry._id !== deletedSuggestion._id));
+    });
+    socket.on('new-post', () => setUpdates(true));
 
-    filterSuggestions(suggestions, statusFilter);
-  }, [suggestions, statusFilter]);
+    return () => {
+      socket.off('delete-suggestion');
+      socket.off('new-post');
+    };
+  }, [socket]);
 
-  const filterSuggestions = (suggestions, status) => {
-    const filtered = suggestions.filter((suggestion) => suggestion.status === status);
-    setFilteredSuggestions(filtered);
-  };
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // Adjust based on your preference
+  const filteredSuggestions = useMemo(
+    () => suggestions.filter((suggestion) => suggestion.status === statusFilter),
+    [suggestions, statusFilter]
+  );
 
-  // Calculate the current suggestions to display based on pagination
-  const indexOfLastSuggestion = currentPage * itemsPerPage;
-  const indexOfFirstSuggestion = indexOfLastSuggestion - itemsPerPage;
-  const currentSuggestions = filteredSuggestions.slice(indexOfFirstSuggestion, indexOfLastSuggestion);
-
-  // Change page handler
-  const handleChangePage = (event, newPage) => {
-    setCurrentPage(newPage);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Optional: scroll to the top when changing page
-  };
-
-  // Calculate total pages for Pagination component
-  const countPages = Math.ceil(filteredSuggestions.length / itemsPerPage);
+  const openCount = suggestions.filter((suggestion) => suggestion.status === 'open').length;
+  const closedCount = suggestions.filter((suggestion) => suggestion.status === 'closed').length;
+  const showComposer = !['manager', 'admin', 'secy', 'dean'].includes(user?.Role);
 
   return (
-    <>
-      <Container
-        maxWidth="xl"
+    <Container maxWidth="xl" sx={{ py: { xs: 2, md: 4 } }}>
+      <Box
         sx={{
-          position: 'relative',
+          mb: 3.5,
+          p: { xs: 2.5, md: 4 },
+          borderRadius: 8,
+          color: '#fff',
+          background:
+            'radial-gradient(circle at top left, rgba(255, 204, 115, 0.34) 0%, rgba(255, 204, 115, 0) 34%), linear-gradient(135deg, #4b0f61 0%, #6e1d86 46%, #8e2e5f 100%)',
+          boxShadow: '0 28px 80px rgba(73, 18, 92, 0.24)',
         }}
       >
-        <div style={{ display: 'flex', gap: '20px', justifyContent: !media.isMobile ? 'flex-start' : 'space-between' }}>
-          <Typography variant="h4" gutterBottom>
-            Issues
-          </Typography>
-          {/*
-        // TODO: Here is the filter component make the UI/UX more user friendly
-        */}
-          {/* <Filter typeFilter={typeFilter} setTypeFilter={setTypeFilter} /> */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '10px',
-              marginBottom: '20px',
-            }}
+        <Stack spacing={2.5}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={2}
+            justifyContent="space-between"
+            alignItems={{ xs: 'flex-start', md: 'center' }}
           >
-            <Button
-              variant={statusFilter === 'open' ? 'contained' : 'outlined'}
-              color="primary"
-              onClick={() => setStatusFilter('open')}
-            >
-              Open
-            </Button>
-            <Button
-              variant={statusFilter === 'closed' ? 'contained' : 'outlined'}
-              color="secondary"
-              onClick={() => setStatusFilter('closed')}
-            >
-              Closed
-            </Button>
-          </div>
-        </div>
-        <Container
-          sx={{
-            display: 'flex',
-            margin: '0',
-            width: '100%',
-            // flexDirection: 'column',
-            padding: !media.isMobile ? '' : '0px',
-          }}
-          maxWidth="xl"
-        >
-          <Container
-            sx={{
-              flex: 4,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '10px',
-              flexDirection: 'row',
-              justifyContent: 'flex-start',
-              alignContent: 'flex-start',
-              maxHeight: '94vh',
-              height: '94vh',
-              overflow: 'scroll',
-              position: 'relative',
-            }}
-            className="hideScrollBar"
-          >
-            {updates && (
-              <div
-                style={{
-                  position: 'fixed',
-                  top: '20vh',
-                  left: 'calc(100vw/2 - (137px/2))',
-                  zIndex: '2000',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  opacity: '0.9',
+            <Box>
+              <Typography
+                variant="overline"
+                sx={{ letterSpacing: 2, opacity: 0.9, color: '#ffcc73', fontWeight: 700 }}
+              >
+                Complaints
+              </Typography>
+              <Typography
+                variant="h2"
+                sx={{
+                  mt: 1,
+                  fontWeight: 800,
+                  fontFamily: "'DM Serif Display', serif",
+                  fontSize: { xs: '2rem', md: '3rem' },
                 }}
               >
-                <Chip
-                  sx={{
-                    position: 'relative',
-                    margin: 'auto',
-                    height: 'auto',
-                    padding: '3px',
-                  }}
-                  variant="filled"
-                  component="button"
-                  color="primary"
-                  onClick={() => {
-                    fetchAllSuggestions();
-                    setUpdates(false);
-                  }}
-                  label={<Typography variant="h6">New Updates</Typography>}
-                />
-              </div>
+                Community Complaints Tracker
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 1.5, maxWidth: 760, opacity: 0.82, lineHeight: 1.9 }}>
+                Complaints now keep the full official response history, clearly show who each ticket was sent to, and use a faster compact layout with less scrolling.
+              </Typography>
+            </Box>
+
+            <Stack direction="row" spacing={1.2} sx={{ flexWrap: 'wrap' }}>
+              <Chip
+                label={`${openCount} Active`}
+                sx={{ bgcolor: '#ffcc73', color: '#41124f', fontWeight: 800 }}
+              />
+              <Chip
+                label={`${closedCount} Resolved`}
+                sx={{ bgcolor: 'rgba(255,255,255,0.14)', color: '#fff', fontWeight: 800 }}
+              />
+            </Stack>
+          </Stack>
+
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1.5}
+            justifyContent="space-between"
+            alignItems={{ xs: 'stretch', md: 'center' }}
+          >
+            <Stack direction="row" spacing={1.2}>
+              <Button
+                variant={statusFilter === 'open' ? 'contained' : 'outlined'}
+                onClick={() => setStatusFilter('open')}
+                sx={{
+                  borderRadius: 999,
+                  px: 3,
+                  py: 1.1,
+                  textTransform: 'none',
+                  fontWeight: 800,
+                  bgcolor: statusFilter === 'open' ? '#ffcc73' : 'rgba(255,255,255,0.08)',
+                  color: statusFilter === 'open' ? '#41124f' : '#f5e9ff',
+                  borderColor: statusFilter === 'open' ? '#ffcc73' : 'rgba(255,255,255,0.18)',
+                  '&:hover': {
+                    bgcolor: statusFilter === 'open' ? '#ffc24f' : 'rgba(255,255,255,0.12)',
+                    borderColor: statusFilter === 'open' ? '#ffc24f' : 'rgba(255,255,255,0.28)',
+                  },
+                }}
+              >
+                Active Complaints
+              </Button>
+              <Button
+                variant={statusFilter === 'closed' ? 'contained' : 'outlined'}
+                onClick={() => setStatusFilter('closed')}
+                sx={{
+                  borderRadius: 999,
+                  px: 3,
+                  py: 1.1,
+                  textTransform: 'none',
+                  fontWeight: 800,
+                  bgcolor: statusFilter === 'closed' ? '#f4e7ff' : 'rgba(255,255,255,0.08)',
+                  color: statusFilter === 'closed' ? '#5c176e' : '#f5e9ff',
+                  borderColor: statusFilter === 'closed' ? '#d7b8ef' : 'rgba(255,255,255,0.18)',
+                  '&:hover': {
+                    bgcolor: statusFilter === 'closed' ? '#ead5fb' : 'rgba(255,255,255,0.12)',
+                    borderColor: statusFilter === 'closed' ? '#ceb0ea' : 'rgba(255,255,255,0.28)',
+                  },
+                }}
+              >
+                Resolved Complaints
+              </Button>
+            </Stack>
+
+            {updates && (
+              <Button
+                onClick={() => {
+                  fetchAllSuggestions();
+                  setUpdates(false);
+                }}
+                startIcon={<AutorenewRoundedIcon />}
+                sx={{
+                  alignSelf: { xs: 'stretch', md: 'center' },
+                  borderRadius: 999,
+                  px: 2.5,
+                  py: 1,
+                  textTransform: 'none',
+                  fontWeight: 800,
+                  color: '#4b0f61',
+                  bgcolor: '#fff1d3',
+                  '&:hover': { bgcolor: '#ffe5af' },
+                }}
+              >
+                Refresh New Updates
+              </Button>
             )}
-            {currentSuggestions &&
-              currentSuggestions.map((ele) => {
-                return <SuggestionCard suggestions={ele} key={ele._id} setVote={setVote} isMobile={media.isMobile} />;
-              })}
-            {(!currentSuggestions || currentSuggestions.length === 0) && <CustomError>No Suggestions</CustomError>}
-          </Container>
-          {user.Role !== 'manager' && (
-            <>
-              {media.isLaptop && (
-                <Container
-                  sx={{ flex: 2, maxHeight: '94vh', height: '94vh', overflow: 'scroll' }}
-                  className="hideScrollBar"
-                >
-                  <UserActionsList />
-                </Container>
-              )}
-              {!media.isLaptop && (
-                <>
-                  <Fab
-                    sx={{
-                      position: 'fixed',
-                      bottom: '20px',
-                      right: '20px',
-                      height: '50px',
-                      width: '50px',
-                      zIndex: '2000',
-                    }}
-                    color="primary"
-                    onClick={() => {
-                      setIsDrawarOpen(!isDrawarOpen);
-                    }}
-                  >
-                    {!isDrawarOpen ? <Dehaze /> : <CloseIcon />}
-                  </Fab>
-                  <Drawer
-                    open={isDrawarOpen}
-                    anchor="right"
-                    onClose={() => {
-                      setIsDrawarOpen(!isDrawarOpen);
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '85vw',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <UserActionsList isMobile={media.isMobile} />
-                    </div>
-                  </Drawer>
-                </>
-              )}
-            </>
-          )}
-        </Container>
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          {filteredSuggestions.length > itemsPerPage && (
-            <Pagination
-              count={countPages}
-              page={currentPage}
-              style={{
-                padding: '10px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginTop: '20px',
-                width: 'fit-content',
-              }}
-              onChange={handleChangePage}
-              color="primary"
-              showFirstButton
-              showLastButton
+          </Stack>
+        </Stack>
+      </Box>
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: showComposer ? 'minmax(0, 1.6fr) 420px' : '1fr' }, gap: 3 }}>
+        <Box>
+          {filteredSuggestions.length > 0 ? (
+            filteredSuggestions.map((entry) => (
+              <SuggestionCard
+                key={entry._id}
+                user={user}
+                suggestions={entry}
+                isMobile={isMobile}
+              />
+            ))
+          ) : (
+            <Card
               sx={{
-                '& .MuiPaginationItem-root': {
-                  color: theme.palette.primary.main, // Use theme colors for consistency
-                },
-                '& .Mui-selected': {
-                  backgroundColor: theme.palette.primary.light,
-                  color: theme.palette.common.white,
-                },
-                '& .MuiButtonBase-root:hover': {
-                  backgroundColor: theme.palette.primary.dark,
-                  color: theme.palette.common.white,
-                },
-                boxShadow: '0px 3px 6px rgba(0,0,0,0.1)', // Soft box shadow
-                borderRadius: theme.shape.borderRadius, // Use theme border radius for consistency
+                p: 5,
+                borderRadius: 6,
+                textAlign: 'center',
+                border: '1px solid rgba(92, 23, 110, 0.12)',
+                background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(250,244,255,0.98) 100%)',
               }}
-            />
+            >
+              <CustomError>No complaints in this section right now.</CustomError>
+            </Card>
           )}
-        </div>
-      </Container>
-    </>
+        </Box>
+
+        {showComposer && isLaptop && (
+          <Box sx={{ position: 'sticky', top: 24, alignSelf: 'start' }}>
+            <UserActionsList />
+          </Box>
+        )}
+      </Box>
+
+      {showComposer && !isLaptop && (
+        <>
+          <Fab
+            sx={{
+              position: 'fixed',
+              right: 20,
+              bottom: 20,
+              bgcolor: '#5c176e',
+              color: '#fff',
+              '&:hover': { bgcolor: '#4b0f61' },
+            }}
+            onClick={() => setIsDrawerOpen((prev) => !prev)}
+          >
+            {isDrawerOpen ? <CloseIcon /> : <AddIcon />}
+          </Fab>
+          <Drawer anchor="right" open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}>
+            <Box sx={{ width: { xs: '100vw', sm: 460 }, p: 2 }}>
+              <UserActionsList isMobile={isMobile} />
+            </Box>
+          </Drawer>
+        </>
+      )}
+    </Container>
   );
 };
+
 export default Suggestions;

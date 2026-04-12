@@ -2,10 +2,9 @@ import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 // @mui
-import { styled, alpha } from '@mui/material/styles';
-import { Box, Link, Button, Drawer, Typography, Avatar, Stack } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { Box, Link, Drawer, Typography, Avatar } from '@mui/material';
 // mock
-import account from '../../../_mock/account';
 // hooks
 import useResponsive from '../../../hooks/useResponsive';
 // components
@@ -24,7 +23,8 @@ const StyledAccount = styled('div')(({ theme }) => ({
   alignItems: 'center',
   padding: theme.spacing(2, 2.5),
   borderRadius: Number(theme.shape.borderRadius) * 1.5,
-  backgroundColor: alpha(theme.palette.grey[500], 0.12),
+  backgroundColor: 'rgba(255, 173, 74, 0.12)', // Gold-tinted translucent
+  border: '1px solid rgba(255, 173, 74, 0.15)',
 }));
 
 // ----------------------------------------------------------------------
@@ -43,9 +43,7 @@ export default function Nav({ openNav, onCloseNav }) {
     user = await JSON.parse(user);
     setUser(user);
     // console.log(user)
-    const filterNavData = navConfig.filter((item) => {
-      return item.role === user.Role || item.role === 'all';
-    });
+    const filterNavData = navConfig.filter((item) => item.roles.includes(user?.Role) || item.roles.includes('all'));
     setNavSectionData(filterNavData);
     // setNavSectionData(navConfig)
   };
@@ -72,22 +70,52 @@ export default function Nav({ openNav, onCloseNav }) {
         '& .simplebar-content': { height: 1, display: 'flex', flexDirection: 'column' },
       }}
     >
-      <Box sx={{ px: 2.5, py: 3, display: 'inline-flex' }}>
-        <Logo />
+      {/* Logo + Branding */}
+      <Box sx={{ px: 2.5, py: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Logo sx={{ width: 48, height: 48, filter: 'brightness(0) invert(1) brightness(1.1)' }} />
+        <Box>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              color: '#ffad4a',
+              fontWeight: 700,
+              fontSize: '1.05rem',
+              letterSpacing: '0.5px',
+              lineHeight: 1.2,
+            }}
+          >
+            SmartMess
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'rgba(255,255,255,0.55)',
+              fontSize: '0.65rem',
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase',
+            }}
+          >
+            IIT Dharwad
+          </Typography>
+        </Box>
       </Box>
 
-      <Box sx={{ mb: 5, mx: 2.5 }}>
+      {/* User Account Card */}
+      <Box sx={{ mb: 4, mx: 2.5 }}>
         <Link underline="none">
           <StyledAccount>
-            <Avatar src={user?.Image} alt="photoURL" />
+            <Avatar src={user?.Image} alt="photoURL" sx={{ border: '2px solid rgba(255,173,74,0.4)' }} />
 
             <Box sx={{ ml: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: 'text.primary' }}>
+              <Typography variant="subtitle2" sx={{ color: '#fff', fontWeight: 600 }}>
                 {user?.Username}
               </Typography>
 
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {user?.Role?.charAt(0).toUpperCase()+user?.Role?.slice(1)}
+              <Typography variant="body2" sx={{ color: '#ffad4a', fontWeight: 500, fontSize: '0.75rem' }}>
+                {(() => {
+                  const roleMap = { dean: 'SW Office', manager: 'Manager', secy: 'Secretary', user: 'Student' };
+                  return roleMap[user?.Role] || user?.Role?.charAt(0).toUpperCase() + user?.Role?.slice(1);
+                })()}
               </Typography>
             </Box>
           </StyledAccount>
@@ -98,8 +126,26 @@ export default function Nav({ openNav, onCloseNav }) {
 
       <Box sx={{ flexGrow: 1 }} />
 
+      {/* Bottom Gold Accent Bar */}
+      <Box
+        sx={{
+          mx: 2.5,
+          mb: 2,
+          height: '3px',
+          borderRadius: '2px',
+          background: 'linear-gradient(90deg, #ffad4a 0%, rgba(255,173,74,0.2) 100%)',
+        }}
+      />
     </Scrollbar>
   );
+
+  const sidebarPaperStyles = {
+    width: NAV_WIDTH,
+    background: 'linear-gradient(180deg, #6c1b85 0%, #4A0E6B 60%, #2E0845 100%)',
+    color: '#fff',
+    borderRight: 'none',
+    boxShadow: '4px 0 24px rgba(108, 27, 133, 0.2)',
+  };
 
   return (
     <Box
@@ -114,11 +160,7 @@ export default function Nav({ openNav, onCloseNav }) {
           open
           variant="permanent"
           PaperProps={{
-            sx: {
-              width: NAV_WIDTH,
-              bgcolor: 'background.default',
-              borderRightStyle: 'dashed',
-            },
+            sx: sidebarPaperStyles,
           }}
         >
           {renderContent}
@@ -131,7 +173,7 @@ export default function Nav({ openNav, onCloseNav }) {
             keepMounted: true,
           }}
           PaperProps={{
-            sx: { width: NAV_WIDTH },
+            sx: sidebarPaperStyles,
           }}
         >
           {renderContent}

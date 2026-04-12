@@ -1,153 +1,161 @@
 import * as React from 'react';
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Collapse from '@mui/material/Collapse';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
-import Divider from '@mui/material/Divider';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Card, Divider, Stack, Typography } from '@mui/material';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import SuggestionForm from './SuggestionForm';
 import SuggestionCard from './SuggestionCards';
 import { deleteUserSuggestion, getUserSuggestion } from './apis';
 import { SocketContext } from '../../../Context/socket';
 
-
-export default function UserActionsList(props) {
-  const { isMobile } = props;
-  const [openAdd, setOpenAdd] = React.useState(false);
-  const [openView, setOpenView] = React.useState(false);
+export default function UserActionsList({ isMobile }) {
   const [suggestions, setSuggestions] = React.useState([]);
+  const [user, setUser] = React.useState({});
+  const [openComposer, setOpenComposer] = React.useState(true);
+  const [openTickets, setOpenTickets] = React.useState(false);
   const socket = React.useContext(SocketContext);
+
+  React.useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (error) {
+      console.log('error');
+    }
+  }, []);
 
   const deleteSuggestion = async (suggestionId) => {
     const res = await deleteUserSuggestion({ suggestionId });
-    setSuggestions((suggestions) => {
-      return suggestions.filter((ele) => {
-        return ele._id != suggestionId;
-      });
-    });
-    socket.emit('delete-suggestion', res.data.deletedSuggestion);
-
-
+    setSuggestions((current) => current.filter((entry) => entry._id !== suggestionId));
+    if (res?.data?.deletedSuggestion) {
+      socket.emit('delete-suggestion', res.data.deletedSuggestion);
+    }
   };
 
   const fetchUserSuggestions = React.useCallback(async () => {
     const res = await getUserSuggestion();
-    setSuggestions(res.data.suggestions);
+    setSuggestions(res?.data?.suggestions || []);
   }, []);
 
   React.useEffect(() => {
-    let mounted = true;
-    if (mounted) {
-      fetchUserSuggestions();
-    }
-    return () => {
-      mounted = false;
-    };
+    fetchUserSuggestions();
   }, [fetchUserSuggestions]);
 
   React.useEffect(() => {
-    let mount = true;
-    if (mount) {
-      socket.on('new-post', () => {
-        fetchUserSuggestions();
-      });
-    }
-    return () => {
-      mount = false;
-      // socket.off();
-    };
-  }, [socket]);
+    const refresh = () => fetchUserSuggestions();
+    socket.on('new-post', refresh);
+    return () => socket.off('new-post', refresh);
+  }, [socket, fetchUserSuggestions]);
 
   return (
-    <List
-      sx={{ width: '100%', maxWidth: !isMobile ? 360 : '100%', bgcolor: 'background.paper' }}
-      component="nav"
-      aria-labelledby="nested-list-subheader"
-    >
-      <ListItemButton
-        onClick={() => {
-          setOpenAdd(!openAdd);
+    <Stack spacing={2.5}>
+      <Accordion
+        expanded={openComposer}
+        onChange={() => setOpenComposer((prev) => !prev)}
+        disableGutters
+        elevation={0}
+        sx={{
+          borderRadius: '24px !important',
+          overflow: 'hidden',
+          border: '1px solid rgba(92, 23, 110, 0.12)',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(250,244,255,0.98) 100%)',
+          boxShadow: '0 20px 44px rgba(73, 18, 92, 0.08)',
+          '&:before': { display: 'none' },
         }}
       >
-        <ListItemIcon
-          sx={{
-            justifyContent: 'center',
-          }}
-        >
-          <InboxIcon color={openAdd ? 'primary' : ''} />
-        </ListItemIcon>
-        <ListItemText
-          primary={
-            <Typography
-              variant="h5"
-              sx={{ mb: 3, marginTop: 'auto', marginBottom: 'auto' }}
-              color={openAdd ? 'primary' : ''}
-            >
-              Add New Suggestion
+        <AccordionSummary expandIcon={<ExpandMoreRoundedIcon sx={{ color: '#5c176e' }} />}>
+          <Box>
+            <Typography sx={{ fontWeight: 800, color: '#5c176e', fontFamily: "'DM Serif Display', serif" }}>
+              New Complaint
             </Typography>
-          }
-        />
-        {openAdd ? <ExpandLess /> : <ExpandMore />}
-      </ListItemButton>
-      <Collapse in={openAdd} timeout="auto" unmountOnExit>
-        <Paper
-          elevation={3}
-          sx={{
-            padding: '20px',
-          }}
-        >
-          <SuggestionForm />
-        </Paper>
-      </Collapse>
-      <Divider />
-      <ListItemButton
-        onClick={() => {
-          setOpenView(!openView);
+            <Typography variant="body2" sx={{ color: '#7a6a86' }}>
+              Open only when you want to file a ticket
+            </Typography>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails>
+          <SuggestionForm onSubmitted={fetchUserSuggestions} />
+        </AccordionDetails>
+      </Accordion>
+
+      <Accordion
+        expanded={openTickets}
+        onChange={() => setOpenTickets((prev) => !prev)}
+        disableGutters
+        elevation={0}
+        sx={{
+          borderRadius: '24px !important',
+          overflow: 'hidden',
+          border: '1px solid rgba(92, 23, 110, 0.12)',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(250,244,255,0.98) 100%)',
+          boxShadow: '0 20px 44px rgba(73, 18, 92, 0.08)',
+          '&:before': { display: 'none' },
         }}
       >
-        <ListItemIcon
-          sx={{
-            justifyContent: 'center',
-          }}
-        >
-          <InboxIcon color={openView ? 'primary' : ''} />
-        </ListItemIcon>
-        <ListItemText
-          primary={
-            <Typography
-              variant="h5"
-              sx={{ mb: 3, marginTop: 'auto', marginBottom: 'auto' }}
-              color={openView ? 'primary' : ''}
-            >
-              Your Suggestions
-            </Typography>
-          }
-        />
-        {openView ? <ExpandLess /> : <ExpandMore />}
-      </ListItemButton>
-      <Collapse in={openView} timeout="auto" unmountOnExit>
-        <Paper
-          elevation={3}
-          sx={{
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          {suggestions &&
-            suggestions.map((ele) => {
-              return (
-                <SuggestionCard suggestions={ele} disable key={ele._id} canDelete deleteSuggestion={deleteSuggestion} />
-              );
-            })}
-        </Paper>
-      </Collapse>
-    </List>
+        <AccordionSummary expandIcon={<ExpandMoreRoundedIcon sx={{ color: '#5c176e' }} />}>
+          <Box sx={{ width: '100%' }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pr: 1 }}>
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 800, color: '#5c176e', fontFamily: "'DM Serif Display', serif" }}
+                >
+                  Your Tickets
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#7a6a86', lineHeight: 1.8 }}>
+                  Expand only when you want to review your own complaints
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  minWidth: 34,
+                  height: 34,
+                  px: 1.2,
+                  borderRadius: 99,
+                  display: 'grid',
+                  placeItems: 'center',
+                  bgcolor: '#ffcc73',
+                  color: '#4b0f61',
+                  fontWeight: 800,
+                }}
+              >
+                {suggestions.length}
+              </Box>
+            </Stack>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Divider sx={{ mb: 2.5 }} />
+
+          <Stack spacing={2}>
+            {suggestions.length > 0 ? (
+              suggestions.map((entry) => (
+                <SuggestionCard
+                  key={entry._id}
+                  user={user}
+                  suggestions={entry}
+                  disable
+                  canDelete
+                  isMobile={isMobile}
+                  deleteSuggestion={deleteSuggestion}
+                />
+              ))
+            ) : (
+              <Box
+                sx={{
+                  p: 3,
+                  borderRadius: 4,
+                  textAlign: 'center',
+                  bgcolor: 'rgba(92, 23, 110, 0.04)',
+                  color: '#7a6a86',
+                }}
+              >
+                No personal tickets yet.
+              </Box>
+            )}
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+    </Stack>
   );
 }

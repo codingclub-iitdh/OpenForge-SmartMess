@@ -18,8 +18,8 @@ const User = new Schema({
 		length: 10,
 	},
 	Role: {
-		type: String, //"user"/"admin"/"manager"/"guest"
-		enum: ["user", "admin", "manager", "secy"],
+		type: String, //"user"/"admin"/"manager"/"secy"/"dean"
+		enum: ["user", "admin", "manager", "secy", "dean"],
 		default: "user",
 	},
 	First_Name: {

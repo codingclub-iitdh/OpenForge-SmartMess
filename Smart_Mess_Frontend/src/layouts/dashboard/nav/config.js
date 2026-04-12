@@ -7,94 +7,65 @@ const icon = (name) => <SvgColor src={`/assets/icons/navbar/${name}.svg`} sx={{ 
 
 const navConfig = [
   {
-    title: 'dashboard',
+    title: 'Student Dashboard',
     path: '/dashboard/app',
     icon: icon('ic_analytics'),
-    role: "all",
+    roles: ["user"],
   },
   {
     title: 'Menu',
     path: '/dashboard/menuPage',
     icon: icon('ic_menu'),
-    role: "user",
-  },
-  {
-    title: 'Menu',
-    path: '/dashboard/menuPage',
-    icon: icon('ic_menu'),
-    role: "manager",
+    roles: ["user"],
   },
   {
     title: 'Feedback',
     path: '/dashboard/products',
     icon: icon('ic_cart'),
-    role: "user",
+    roles: ["user"],
   },
   {
     title: 'Rating',
     path: '/dashboard/ratings',
     icon: icon('ic_blog'),
-    role: "user",
+    roles: ["user"],
   },
-  // {
-  //   title: 'Attendance',
-  //   path: '/404',
-  //   icon: icon('ic_disabled'),
-  //   role: "all",
-  // },
   {
     title: 'Edit Food Item',
     path: '/dashboard/addfooditem',
     icon: icon('ic_disabled'),
-    role: "manager",
+    roles: ["manager", "secy"],
   },
   {
-    title: 'View Summary',
+    title: 'SW Office Dashboard',
     path: '/dashboard/summary',
     icon: icon('ic_summary'),
-    role: "manager",
+    roles: ["manager", "secy", "dean"],
   },
   {
-    title:'Analytics',
+    title: 'Analytics',
     path: '/dashboard/analytics',
     icon: icon('ic_charts'),
-    role:"user",
+    roles: ["user", "manager", "secy", "dean"],
   },
-  {
-    title:'Analytics',
-    path: '/dashboard/analytics',
-    icon: icon('ic_charts'),
-    role:"manager",
-  },
-  // {
-  //   title: 'Add Feedback Form',
-  //   path: '/dashboard/feedback',
-  //   icon: icon('ic_summary'),
-  //   role: "manager",
-  // },
   {
     title: 'Add Announcement',
     path: '/dashboard/announcement',
     icon: icon('ic_summary'),
-    role: "manager",
+    roles: ["manager", "secy", "dean"],
+  },
+  {
+    title: 'Complaints',
+    path: '/dashboard/suggestions',
+    icon: icon('ic_issues'),
+    roles: ["user", "manager", "secy", "dean", "admin"],
+  },
+  {
+    title: 'Guest Booking',
+    path: '/dashboard/guestBooking',
+    icon: icon('ic_guest'),
+    roles: ["user", "manager", "secy", "dean"],
   }
-,{
-  title:'Issues',
-  path: '/dashboard/suggestions', icon: icon('ic_issues'),role:"user"
-},
-{
-  title:'Issues',
-  path: '/dashboard/suggestions', icon: icon('ic_issues'),role:"secy"
-},
-{
-  title:'Issues',
-  path: '/dashboard/suggestions', icon: icon('ic_issues'),role:"admin"
-}
-,
-{
-  title:'Issues',
-  path: '/dashboard/suggestions', icon: icon('ic_issues'),role:"manager"
-}
 ];
 
 export default navConfig;

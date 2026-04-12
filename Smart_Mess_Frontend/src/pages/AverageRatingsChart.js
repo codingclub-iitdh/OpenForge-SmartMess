@@ -28,7 +28,7 @@ const AverageRatingsChart = () => {
     const fetchRatings = async () => {
       try {
         const url = `${process.env.REACT_APP_SERVER_URL}/running-average-ratings`;
-        let response = await fetch(url, {
+        const response = await fetch(url, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -40,8 +40,9 @@ const AverageRatingsChart = () => {
         }
   
         const data = await response.json();
-        setChartData(data);
-        setVisibleData(data.slice(0, pageSize));
+        const ratingsArray = Array.isArray(data) ? data : [];
+        setChartData(ratingsArray);
+        setVisibleData(ratingsArray.slice(0, pageSize));
       } catch (error) {
         console.error("Failed to fetch ratings:", error.message);
       }

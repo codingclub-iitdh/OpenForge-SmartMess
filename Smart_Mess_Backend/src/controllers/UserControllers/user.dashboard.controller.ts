@@ -22,8 +22,10 @@ export const getAllSuggestions = async (
       const suggestions = await SuggestionModel.find({
         messId: currUserMess
       })
-        .populate('userId', 'Username Image')
-        .populate('upvotes downvotes', 'Username')
+        .populate('userId', 'Username Image Role Email')
+        .populate('upvotes downvotes resolutionUpvotes resolutionDownvotes', 'Username')
+        .populate('children.userId', 'Username Image')
+        .populate('responseHistory.respondedBy', 'Username Image Role')
         .exec()
 
       if (suggestions.length > 0) {

@@ -2,7 +2,9 @@ import { alpha } from '@mui/material/styles';
 
 // ----------------------------------------------------------------------
 
-// SETUP COLORS
+// SETUP COLORS — IIT Dharwad Branding
+// Logo analysis: ~70% Purple (dominant), ~30% Gold (accent)
+
 const GREY = {
   0: '#FFFFFF',
   100: '#F9FAFB',
@@ -17,21 +19,21 @@ const GREY = {
 };
 
 const PRIMARY = {
-  lighter: '#D1E9FC',
-  light: '#76B0F1',
-  main: '#2065D1',
-  dark: '#103996',
-  darker: '#061B64',
+  lighter: '#E8D0F0',
+  light: '#9C4DB5',
+  main: '#6c1b85',   // IIT Dharwad Royal Purple
+  dark: '#4A0E6B',
+  darker: '#2E0845',
   contrastText: '#fff',
 };
 
 const SECONDARY = {
-  lighter: '#D6E4FF',
-  light: '#84A9FF',
-  main: '#3366FF',
-  dark: '#1939B7',
-  darker: '#091A7A',
-  contrastText: '#fff',
+  lighter: '#ffe4b5',
+  light: '#ffc87a',
+  main: '#ffad4a',    // IIT Dharwad Golden Amber
+  dark: '#e89520',
+  darker: '#c07b10',
+  contrastText: GREY[800],
 };
 
 const INFO = {
@@ -87,7 +89,7 @@ const palette = {
   },
   background: {
     paper: '#fff',
-    default: GREY[100],
+    default: '#faf8fc',  // faint purple-tinted off-white
     neutral: GREY[200],
   },
   action: {

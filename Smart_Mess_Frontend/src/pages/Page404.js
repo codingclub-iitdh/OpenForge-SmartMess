@@ -22,12 +22,12 @@ export default function Page404() {
   return (
     <>
       <Helmet>
-        <title> 404 Page Not Found | Minimal UI </title>
+        <title> 404 Page Not Found | SmartMess </title>
       </Helmet>
 
       <Container>
         <StyledContent sx={{ textAlign: 'center', alignItems: 'center' }}>
-          <Typography variant="h3" paragraph>
+          <Typography variant="h3" paragraph sx={{ color: '#6c1b85', fontFamily: "'DM Serif Display', serif" }}>
             Sorry, page not found!
           </Typography>
 
@@ -42,7 +42,8 @@ export default function Page404() {
             sx={{ height: 260, mx: 'auto', my: { xs: 5, sm: 10 } }}
           />
 
-          <Button to="/" size="large" variant="contained" component={RouterLink}>
+          <Button to="/" size="large" variant="contained" component={RouterLink}
+            sx={{ backgroundColor: '#6c1b85', '&:hover': { backgroundColor: '#4A0E6B' }, fontWeight: 700, borderRadius: 2, px: 5 }}>
             Go to Home
           </Button>
         </StyledContent>

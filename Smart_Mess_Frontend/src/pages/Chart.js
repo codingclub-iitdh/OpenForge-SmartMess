@@ -27,7 +27,10 @@ function Chart() {
           },
         });
         data = await data.json();
-        const formattedData = data.map(item => ({
+        
+        // Safety check: ensure data is an array before mapping
+        const suggestionsArray = Array.isArray(data) ? data : [];
+        const formattedData = suggestionsArray.map(item => ({
           time: new Date(item.date).toLocaleDateString(),
           visitors: item.visitors,
         }));

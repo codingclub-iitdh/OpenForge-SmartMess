@@ -7,10 +7,17 @@ import { JWTLoadData } from '../Interface/interfaces';
 import { sendNotification } from '../config/firebaseWeb';
 import Analytics from '../models/analytics';
 
+const normalizeEmail = (value: string = '') => value.trim().toLowerCase();
+const parseEmailList = (value?: string) =>
+    (value || '')
+        .split(',')
+        .map(normalizeEmail)
+        .filter(Boolean);
+
 const webSigninHandler = async (req: Request, res: Response): Promise<Response | undefined> => {
     try {
-        const { authCode } = req.body;
-        console.log(req.body);
+        const { authCode, requestedRole } = req.body;
+        console.log("Incoming Login Request:", req.body);
         if (!authCode) return res.status(400).send("authCode not provided");
         // Handle web signup
         try {
@@ -20,13 +27,30 @@ const webSigninHandler = async (req: Request, res: Response): Promise<Response |
                 //check if user already exists
                 let user = await user_model.findOne({ Email: userInfo.email });
                 let isNewUser = false;
+                // Determine maximum user role from .env whitelists
+                let maxRole = "user";
+                const normalizedUserEmail = normalizeEmail(userInfo.email);
+                const managerEmails = parseEmailList(process.env.MESS_MANAGER_EMAILS);
+                const secyEmails = parseEmailList(process.env.MESS_SECY_EMAILS);
+                const deanEmails = parseEmailList(process.env.DEAN_SW_EMAILS);
+
+                console.log("=== ROLE DEBUG ===");
+                console.log("Authenticating Email:", normalizedUserEmail);
+                console.log("Parsed Manager Emails:", managerEmails);
+                console.log("Parsed Dean Emails:", deanEmails);
+                console.log("==================");
+
+                if (deanEmails.includes(normalizedUserEmail)) maxRole = "dean";
+                else if (secyEmails.includes(normalizedUserEmail)) maxRole = "secy";
+                else if (managerEmails.includes(normalizedUserEmail)) maxRole = "manager";
+
                 if (!user) {
                     //create new user
                     const newUser = await user_model.create({
                         Username: userInfo.name,
                         Email: userInfo.email,
                         Phone_Number: 0,
-                        Role: "user",
+                        Role: maxRole,
                         First_Name: userInfo.given_name,
                         Last_Name: userInfo.family_name,
                         Image: userInfo.picture,
@@ -35,10 +59,16 @@ const webSigninHandler = async (req: Request, res: Response): Promise<Response |
                     });
                     user = newUser;
                     isNewUser = true;
+                } else {
+                    // Sync user role with the current whitelist
+                    if (user.get('Role') !== maxRole) {
+                        user.set('Role', maxRole);
+                        await user.save();
+                    }
                 }
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-        
+
                 const analyticsRecord = await Analytics.findOne({ date: today });
                 if (analyticsRecord) {
                     // If record exists for today and the user's ID is not in visitorIds, add it
@@ -50,25 +80,66 @@ const webSigninHandler = async (req: Request, res: Response): Promise<Response |
                     }
                 } else {
                     // If no record exists for today, create a new one
-                    const newRecord =   await Analytics.create({
+                    const newRecord = await Analytics.create({
                         date: today,
                         uniqueVisitorsCount: 1,
                         visitorIds: [user._id.toString()]
                     });
-                    console.log("Created new analytics record for today:" , newRecord);
+                    console.log("Created new analytics record for today:", newRecord);
                 }
                 // console.log(user);
+                // Determine the ACTIVE Role for this session
+                let activeRole = maxRole;
+
+                if (requestedRole) {
+                    if (requestedRole === 'user') {
+                        activeRole = 'user'; // Anyone can log in as a student
+                    } else if (requestedRole === 'manager' && ['manager', 'secy', 'dean'].includes(maxRole)) {
+                        activeRole = 'manager';
+                    } else if (requestedRole === 'dean' && maxRole === 'dean') {
+                        activeRole = 'dean';
+                    } else {
+                        console.log("=== AUTHORIZATION DENIED ===");
+                        console.log("Requested Role:", requestedRole);
+                        console.log("User Email:", normalizedUserEmail);
+                        console.log("Max Role Assigned:", maxRole);
+                        console.log("Dean Emails in Config:", deanEmails);
+                        console.log("=============================");
+                        return res.status(403).json({
+                            message: "You don't have authorization for this portal.",
+                            debug: {
+                                email: normalizedUserEmail,
+                                requestedRole,
+                                assignedRole: maxRole,
+                                deanEmails
+                            }
+                        });
+                    }
+                }
+
                 //create session
                 const payload: JWTLoadData = {
                     user: {
                         email: user.Email,
-                        role: user.Role as string,
+                        role: activeRole,
                         time: Date.now(),
                     },
                 };
                 const token = createSession(payload);
-                if (isNewUser) return res.status(201).json({ token, user });
-                return res.status(200).json({ token, user });
+
+                // Return explicitly requested role to frontend so routing works correctly
+                const returnUser = user.toObject();
+                returnUser.Role = activeRole as any;
+
+                console.log("=== ROLE DEBUG ===");
+                console.log("Requested Role:", requestedRole);
+                console.log("Max Role:", maxRole);
+                console.log("Active Session Role Generated:", activeRole);
+                console.log("Returned User Role Object:", returnUser.Role);
+                console.log("==================");
+
+                if (isNewUser) return res.status(201).json({ token, user: returnUser });
+                return res.status(200).json({ token, user: returnUser });
                 //
             } catch (err) {
                 console.log(err);
@@ -85,17 +156,34 @@ const webSigninHandler = async (req: Request, res: Response): Promise<Response |
 
 const androidSigninHandler = async (req: Request, res: Response): Promise<Response | undefined> => {
     try {
-        const {Email,Username,Image,First_Name,Last_Name} = req.body;
+        const { Email, Username, Image, First_Name, Last_Name } = req.body;
         console.log(req.body);
         let user = await user_model.findOne({ Email: Email });
         let isNewUser = false;
+        // Determine user role from .env whitelists
+        let assignedRole = "user";
+        const normalizedUserEmail = normalizeEmail(Email);
+        const managerEmails = parseEmailList(process.env.MESS_MANAGER_EMAILS);
+        const secyEmails = parseEmailList(process.env.MESS_SECY_EMAILS);
+        const deanEmails = parseEmailList(process.env.DEAN_SW_EMAILS);
+
+        console.log("=== ROLE DEBUG ===");
+        console.log("Authenticating Email:", normalizedUserEmail);
+        console.log("Parsed Manager Emails:", managerEmails);
+        console.log("Parsed Dean Emails:", deanEmails);
+        console.log("==================");
+
+        if (deanEmails.includes(normalizedUserEmail)) assignedRole = "dean";
+        else if (secyEmails.includes(normalizedUserEmail)) assignedRole = "secy";
+        else if (managerEmails.includes(normalizedUserEmail)) assignedRole = "manager";
+
         if (!user) {
             //create new user
             const newUser = await user_model.create({
                 Username: Username,
                 Email: Email,
                 Phone_Number: 0,
-                Role: "user",
+                Role: assignedRole,
                 First_Name: First_Name,
                 Last_Name: Last_Name,
                 Image: Image,
@@ -104,6 +192,12 @@ const androidSigninHandler = async (req: Request, res: Response): Promise<Respon
             });
             user = newUser;
             isNewUser = true;
+        } else {
+            // Sync user role with the current whitelist
+            if (user.get('Role') !== assignedRole) {
+                user.set('Role', assignedRole);
+                await user.save();
+            }
         }
         // console.log(user);
         //create session
@@ -123,4 +217,4 @@ const androidSigninHandler = async (req: Request, res: Response): Promise<Respon
 }
 
 
-export { webSigninHandler,androidSigninHandler };
+export { webSigninHandler, androidSigninHandler };

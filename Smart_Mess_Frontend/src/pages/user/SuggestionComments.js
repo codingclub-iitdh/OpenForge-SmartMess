@@ -1,235 +1,110 @@
-import React, { useCallback, useEffect, useState, useContext } from 'react';
-import { useLinkClickHandler, useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Box, Container, Drawer, Fab, Stack, Typography } from '@mui/material';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import { useParams } from 'react-router-dom';
-import { Chip, Container, Typography, Drawer, Fab } from '@mui/material';
-import { SocketContext } from '../../Context/socket';
 import SuggestionCard from './Suggestions/SuggestionCards';
-import './index.css';
 import UserActionsListComment from './Suggestions/UserActionListComment';
 import { getoneSuggestion } from './apis';
 import CustomError from '../CustomErrorMessage';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import Filter from './Suggestions/Filter';
-import Dehaze from '@mui/icons-material/Dehaze';
-import CloseIcon from '@mui/icons-material/Close';
 import CommentCard from './Suggestions/CommentCard';
 
-// const socket = io.connect(process.env.REACT_APP_SOCKET_URL);
-
 const SuggestionComment = () => {
-  const navigate = useNavigate();
   const { suggestionId } = useParams();
-  const [suggestionComment, setSuggestionComment] = useState([]);
-  const [isDrawarOpen, setIsDrawarOpen] = useState(false);
-  const media = {
-    isLaptop: useMediaQuery('(min-width:1023px)'),
-    isTablet: useMediaQuery('(min-width:427px)') && useMediaQuery('(max-width:1022px)'),
-    isMobile: useMediaQuery('(max-width:426px)'),
-  };
+  const [suggestionComment, setSuggestionComment] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [user, setUser] = useState({});
+  const isLaptop = useMediaQuery('(min-width:1024px)');
+  const isMobile = useMediaQuery('(max-width:640px)');
 
-  const socket = useContext(SocketContext);
-  // Vote Logic
-  const [vote, setVote] = useState(null);
-  const [updates, setUpdates] = useState(false);
-  const isLaptop = useMediaQuery('(min-width:1023px)');
-  const isMobile = useMediaQuery('(max-width:600px)');
-  const socket_ChangeVote = useCallback((vote) => {
-    // console.log(vote);
-    setSuggestionComment((suggestions) => {
-      return suggestions.map((ele) => {
-        if (ele._id === vote._id) {
-          ele.downvotes = vote.downvotes;
-          ele.upvotes = vote.upvotes;
-          return ele;
-        }
-        return ele;
-      });
-    });
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (error) {
+      console.log('error fetching user');
+    }
   }, []);
-
-  const socket_RemoveSuggestion = useCallback((deletedSuggestion) => {
-    // console.log({ deletedSuggestion });
-    setSuggestionComment((suggestions) => {
-      return suggestions.filter((ele) => {
-        return ele._id != deletedSuggestion._id;
-      });
-    });
-  }, []);
-
-  // useEffect(() => {
-  //   let mount = true;
-  //   if (mount) {
-  //     socket.on('vote-update', (vote) => {
-  //       socket_ChangeVote(vote);
-  //     });
-  //     if (vote !== null) {
-  //       socket.emit('vote-cast', vote);
-  //       setVote(null);
-  //     }
-  //     socket.on('delete-suggestion', (deletedSuggestion) => {
-  //       socket_RemoveSuggestion(deletedSuggestion);
-  //     });
-  //     socket.on('new-post', () => {
-  //       setUpdates(true);
-  //     });
-  //   }
-  //   return () => {
-  //     mount = false;
-  //     // socket.off();
-  //   };
-  // }, [vote, socket]);
 
   const fetchSuggestion = useCallback(async () => {
     const res = await getoneSuggestion(suggestionId);
-    setSuggestionComment(res.data.suggestion);
-  }, []);
-
-  // useEffect(() => {
-  //   console.log(suggestionComment);
-  // }, [suggestionComment]);
+    setSuggestionComment(res?.data?.suggestion || null);
+  }, [suggestionId]);
 
   useEffect(() => {
-    let mount = true;
-    if (mount === true) {
-      fetchSuggestion();
-    }
-    return () => {
-      mount = false;
-    };
+    fetchSuggestion();
   }, [fetchSuggestion]);
 
+  const showCommentComposer = !['manager', 'admin', 'secy', 'dean'].includes(user?.Role);
+
   return (
-    <>
-      <Container
-        maxWidth="xl"
-        sx={{
-          position: 'relative',
-        }}
-      >
-        <Container
-          sx={{
-            display: 'flex',
-            margin: '0',
-            width: '100%',
-            // flexDirection: 'column',
-          }}
-          maxWidth="xl"
-        >
-          <Container
-            sx={{
-              flex: 4,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '10px',
-              flexDirection: 'row',
-              justifyContent: 'flex-start',
-              alignContent: 'flex-start',
-              maxHeight: '94vh',
-              height: '94vh',
-              overflow: 'scroll',
-              position: 'relative',
-            }}
-            className="hideScrollBar"
+    <Container maxWidth="xl" sx={{ py: { xs: 2, md: 4 } }}>
+      <Stack spacing={3}>
+        <Box>
+          <Typography
+            variant="h3"
+            sx={{ fontWeight: 800, color: '#1f3b2f', fontFamily: "'DM Serif Display', serif" }}
           >
-            {updates && (
-              <div
-                style={{
-                  width: '100%',
-                  position: 'absolute',
-                  top: '2%',
-                  zIndex: '10',
-                  display: 'flex',
-                  justifyContent: 'center',
-                }}
-              >
-                <Chip
-                  sx={{
-                    position: 'relative',
-                    margin: 'auto',
-                    height: 'auto',
-                    padding: '3px',
-                  }}
-                  variant="filled"
-                  component="button"
-                  color="primary"
-                  onClick={() => {
-                    fetchSuggestion();
-                    setUpdates(false);
-                  }}
-                  label={<Typography variant="h6">New Updates</Typography>}
-                />
-              </div>
+            Complaint Thread
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 1, color: '#61707b', lineHeight: 1.8 }}>
+            Read the complaint thread, review all authority responses, and follow the public discussion around this complaint.
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: showCommentComposer ? 'minmax(0, 1.6fr) 380px' : '1fr' }, gap: 3 }}>
+          <Stack spacing={2}>
+            {suggestionComment ? (
+              <>
+                <SuggestionCard user={user} suggestions={suggestionComment} discusson isMobile={isMobile} />
+                {suggestionComment.children?.length > 0 ? (
+                  suggestionComment.children.map((entry) => (
+                    <CommentCard comments={entry} key={entry._id || entry.id} />
+                  ))
+                ) : (
+                  <CustomError>No comments yet.</CustomError>
+                )}
+              </>
+            ) : (
+              <CustomError>No complaint found.</CustomError>
             )}
-{/*            
-            <SuggestionCard suggestions={suggestionComment} key={suggestionId} setVote={setVote} discusson={true} />
-            {suggestionComment &&
-              suggestionComment.children?.map((ele) => {
-                // comment
-                return <CommentCard comments={ele} key={ele._id} setVote={setVote} />;
-              })}
-              {(!suggestionComment || suggestionComment.length === 0) && <CustomError>No Comments</CustomError>} */}
-              {suggestionComment && suggestionComment.children  ? (
-    <>
-      <SuggestionCard suggestions={suggestionComment} key={suggestionId} setVote={setVote} discusson={true} />
-      {suggestionComment.children.map((ele) => (
-        <CommentCard comments={ele} key={ele._id} setVote={setVote} />
-      ))}
-    </>
-  ) : (
-    <CustomError>No Comments</CustomError>
-  )
-}
-  
-          </Container>
-          {media.isLaptop && (
-            <Container
-              sx={{ flex: 2, maxHeight: '94vh', height: '94vh', overflow: 'scroll' }}
-              className="hideScrollBar"
-            >
+          </Stack>
+
+          {showCommentComposer && isLaptop && (
+            <Box sx={{ position: 'sticky', top: 24, alignSelf: 'start' }}>
               <UserActionsListComment Id={suggestionId} />
-            </Container>
+            </Box>
           )}
-          {!media.isLaptop && (
-            <>
-              <Fab
-                sx={{
-                  position: 'fixed',
-                  bottom: '20px',
-                  right: '20px',
-                  height: '50px',
-                  width: '50px',
-                  zIndex: '2000',
-                }}
-                color="primary"
-                onClick={() => {
-                  setIsDrawarOpen(!isDrawarOpen);
-                }}
-              >
-                {!isDrawarOpen ? <Dehaze /> : <CloseIcon />}
-              </Fab>
-              <Drawer
-                open={isDrawarOpen}
-                anchor="right"
-                onClose={() => {
-                  setIsDrawarOpen(!isDrawarOpen);
-                }}
-              >
-                <div
-                  style={{
-                    width: '85vw',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
-                  <UserActionsListComment Id={suggestionId} />
-                </div>
-              </Drawer>
-            </>
-          )}
-        </Container>
-      </Container>
-    </>
+        </Box>
+      </Stack>
+
+      {showCommentComposer && !isLaptop && (
+        <>
+          <Fab
+            sx={{
+              position: 'fixed',
+              right: 20,
+              bottom: 20,
+              bgcolor: '#1f3b2f',
+              color: '#fff',
+              '&:hover': { bgcolor: '#173026' },
+            }}
+            onClick={() => setIsDrawerOpen((prev) => !prev)}
+          >
+            {isDrawerOpen ? <CloseIcon /> : <AddIcon />}
+          </Fab>
+          <Drawer anchor="right" open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}>
+            <Box sx={{ width: { xs: '100vw', sm: 420 }, p: 2 }}>
+              <UserActionsListComment Id={suggestionId} />
+            </Box>
+          </Drawer>
+        </>
+      )}
+    </Container>
   );
 };
+
 export default SuggestionComment;

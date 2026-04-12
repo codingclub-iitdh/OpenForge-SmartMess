@@ -1,13 +1,7 @@
 import { toast } from 'react-toastify';
 import { resquestNotificationPermission, getfirebaseToken } from '../notifications/firebase';
 
-const handleAuthError = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  window.location.href = process.env.REACT_APP_CLIENT_URL;
-};
-
-const Signin = async (code) => {
+const Signin = async (code, requestedRole = 'user') => {
   try {
     const url = `${process.env.REACT_APP_SERVER_URL}/auth/signin/web`;
 
@@ -16,7 +10,7 @@ const Signin = async (code) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ authCode: code }),
+      body: JSON.stringify({ authCode: code, requestedRole }),
     });
     // console.log(response);
     return response;
@@ -36,7 +30,7 @@ const handleNotification = async () => {
       const notificationToken = await getfirebaseToken();
       // console.log(notificationToken);
       const url = `${process.env.REACT_APP_SERVER_URL}/user/addNotificationToken/web`;
-      const response = await fetch(url, {
+      await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,12 +92,14 @@ const getDashTimeTable = async () => {
       },
     });
     if (response.status === 401) {
-      handleAuthError();
+      console.warn('getDashTimeTable: 401 Unauthorized');
+      return [];
     }
     response = await response.json();
     return response;
   } catch (err) {
     console.log(err);
+    return [];
   }
 };
 
@@ -157,6 +153,40 @@ const createFoodItem = async (data) => {
     });
     console.log(response);
     console.log(data);
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+};
+
+const updateFoodItemApi = async (data) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/updateFoodItem`;
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+};
+
+const deleteFoodItemApi = async (id) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/deleteFoodItem/${id}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
     return response;
   } catch (err) {
     console.log(err);
@@ -234,7 +264,8 @@ const getFoodItemRating = async () => {
       },
     });
     if (response.status === 401) {
-      handleAuthError();
+      console.warn('getFoodItemRating: 401 Unauthorized');
+      return [];
     }
     return await response.json();
   } catch (error) {
@@ -313,7 +344,8 @@ const getFoodReviews = async () => {
     });
     res = await res.json();
     if (res.status === 401) {
-      handleAuthError();
+      console.warn('getFoodReviews: 401 Unauthorized');
+      return [];
     }
     return res;
   } catch (err) {
@@ -342,6 +374,144 @@ const submitFoodReview = async (data) => {
   }
 };
 
+export const uploadMenuPdfApi = async (formData) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/uploadMenuPdf`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: formData,
+    });
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const uploadRuleBookApi = async (formData) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/uploadRuleBook`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: formData,
+    });
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const getMenuPdfApi = async () => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/user/dashboard/menuPdf`;
+    let response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    response = await response.json();
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const updateIngredientBrandsApi = async (data) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/updateIngredientBrands`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const getIngredientBrandsApi = async () => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/user/dashboard/ingredients`;
+    let response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    response = await response.json();
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const bookGuestMealApi = async (data) => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/user/dashboard/guestBooking`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const getMyGuestBookingsApi = async () => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/user/dashboard/myGuestBookings`;
+    let response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    response = await response.json();
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
+export const getAllGuestBookingsApi = async () => {
+  try {
+    const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/guestBookings`;
+    let response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    response = await response.json();
+    return response;
+  } catch (err) {
+    console.log(err);
+  }
+  return null;
+}
+
 export {
   Signin,
   handleNotification,
@@ -358,4 +528,6 @@ export {
   addAnnouncementForm,
   getFoodReviews,
   submitFoodReview,
+  updateFoodItemApi,
+  deleteFoodItemApi
 };

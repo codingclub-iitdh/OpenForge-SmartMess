@@ -1,69 +1,17 @@
 import * as React from 'react';
-import { styled } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
-import CardMedia from '@mui/material/CardMedia';
-import ArrowCircleUpSharpIcon from '@mui/icons-material/ArrowCircleUpSharp';
-import ArrowCircleDownSharpIcon from '@mui/icons-material/ArrowCircleDownSharp';
 import CardContent from '@mui/material/CardContent';
-import CardActions from '@mui/material/CardActions';
-import Collapse from '@mui/material/Collapse';
 import Avatar from '@mui/material/Avatar';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import { red, green } from '@mui/material/colors';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { red } from '@mui/material/colors';
 import dayjs from 'dayjs';
-import { voteSuggestion } from '../apis';
 import Delete from '@mui/icons-material/Delete';
-import { markAsresolved } from './apis';
-
-const ExpandMore = styled((props) => {
-  const { expand, ...other } = props;
-  return <IconButton {...other} />;
-})(({ theme, expand }) => ({
-  transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',
-  marginLeft: 'auto',
-  transition: theme.transitions.create('transform', {
-    duration: theme.transitions.duration.shortest,
-  }),
-}));
 
 export default function CommentCard(props) {
-  const [expanded, setExpanded] = React.useState(false);
-  const [upvotes, setUpvotes] = React.useState(props?.comments?.upvotes);
-  const [downvotes, setDownvotes] = React.useState(props?.comments?.downvotes);
-  const { setVote, disable, canDelete, deleteComment } = props;
-  const commentid = props.comments._id;
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
-  };
-  const navigate = useNavigate();
-  const handleClick = async (isUpvote, commentId) => {
-    const res = await voteSuggestion({ upvote: isUpvote, commentId });
-    setUpvotes(res.data.upvotes);
-    setDownvotes(res.data.downvotes);
-    setVote(res.data);
-  };
-  const handleCardClick = () => {
-    navigate(props?.comments?._id);
-  };
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+  const { canDelete, deleteComment } = props;
 
   return (
     <Card
@@ -106,7 +54,7 @@ export default function CommentCard(props) {
         <Typography variant="body1" color="text.secondary" style={{ fontSize: '18px' }}>
           {canDelete
             ? props?.comments?.comment.length > 100
-              ? props?.comments?.comment.substring(0, 100) + '...'
+              ? `${props?.comments?.comment.substring(0, 100)}...`
               : props?.comments?.comment
             : props?.comments?.comment}
         </Typography>
@@ -125,3 +73,18 @@ export default function CommentCard(props) {
     </Card>
   );
 }
+
+CommentCard.propTypes = {
+  canDelete: PropTypes.bool,
+  deleteComment: PropTypes.func,
+  comments: PropTypes.shape({
+    id: PropTypes.string,
+    _id: PropTypes.string,
+    comment: PropTypes.string,
+    createdAt: PropTypes.string,
+    userId: PropTypes.shape({
+      Image: PropTypes.string,
+      Username: PropTypes.string,
+    }),
+  }),
+};

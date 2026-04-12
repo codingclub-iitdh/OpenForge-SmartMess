@@ -1,338 +1,181 @@
 import React, { useEffect, useState } from 'react';
-
-import { Card, Collapse, Spin } from 'antd';
-
-import { Grid, Typography, Container } from '@mui/material';
-import Tooltip from '@mui/material/Tooltip';
-
-import { getDashTimeTable } from '../utils/apis';
-import { Margin } from '@mui/icons-material';
-
-const { Meta } = Card;
-
-const generateMealTypeComponent = (mealTypeData) => {
-  return (
-    <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 16 }}>
-      {mealTypeData.map((item, index) => (
-        <Tooltip
-          title={item?.Name}
-          slotProps={{
-            popper: {
-              modifiers: [
-                {
-                  name: 'offset',
-                  options: {
-                    offset: [-30, -25],
-                  },
-                },
-              ],
-            },
-          }}
-        >
-          <Grid item xs={4} sm={4} md={4} lg={4} key={index}>
-            <Card
-              bordered
-              style={{
-                width: 240,
-              }}
-              cover={
-                <img style={{ height: '160px', objectFit: 'cover' }} alt="example" src={item?.Image} loading="lazy" />
-              }
-            >
-              <Meta title={item?.Name} />
-            </Card>
-          </Grid>
-        </Tooltip>
-      ))}
-    </Grid>
-  );
-};
+import { Container, Box, Typography, Button, Grid, Stack, Divider } from '@mui/material';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import { Card } from 'antd';
+import { getDashTimeTable, getMenuPdfApi, getIngredientBrandsApi } from '../utils/apis';
+import MenuCalendar from '../sections/menu/MenuCalendar';
 
 const MyMenuPage = () => {
-  const date = new Date();
-  let today = date.getDay();
-  if (today === 0) {
-    today = 7;
-  }
-
   const [timeTableData, setTimeTableData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [mondayData, setMondayData] = useState([]);
-  const [tuesdayData, setTuesdayData] = useState([]);
-  const [wednesdayData, setWednesdayData] = useState([]);
-  const [thursdayData, setThursdayData] = useState([]);
-  const [fridayData, setFridayData] = useState([]);
-  const [saturdayData, setSaturdayData] = useState([]);
-  const [sundayData, setSundayData] = useState([]);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [ruleBookUrl, setRuleBookUrl] = useState(null);
+  const [ingredients, setIngredients] = useState(null);
 
-  // console.log(mondayData);
-  const breakfastArr = mondayData.filter((day) => {
-    return day.Type === 'Breakfast';
-  });
-  // console.log(breakfastArr.Items);
-
-  const isManager = localStorage.getItem('user').role === 'manager';
-
-  const getTimeTableData = async () => {
+  const fetchData = async () => {
     setLoading(true);
-    const res = await getDashTimeTable();
-
-    if (res?.length) {
-      const temp = [];
-      res?.forEach((item) => {
-        if (item.Day === 'Monday') {
-          setMondayData((prvData) => {
-            return [...prvData, item];
-          });
-        } else if (item.Day === 'Tuesday') {
-          setTuesdayData((prvData) => {
-            return [...prvData, item];
-          });
-        } else if (item.Day === 'Wednesday') {
-          setWednesdayData((prvData) => {
-            return [...prvData, item];
-          });
-        } else if (item.Day === 'Thursday') {
-          setThursdayData((prvData) => {
-            return [...prvData, item];
-          });
-        } else if (item.Day === 'Friday') {
-          setFridayData((prvData) => {
-            return [...prvData, item];
-          });
-        } else if (item.Day === 'Saturday') {
-          setSaturdayData((prvData) => {
-            return [...prvData, item];
-          });
-        } else if (item.Day === 'Sunday') {
-          setSundayData((prvData) => {
-            return [...prvData, item];
-          });
-        }
-      });
-    }
-    // console.log(res);
-    setTimeTableData(res);
-    setLoading(false);
-  };
-  useEffect(() => {
     try {
-      getTimeTableData();
+      const [ttRes, pdfRes, ingRes] = await Promise.all([
+         getDashTimeTable(),
+         getMenuPdfApi(),
+         getIngredientBrandsApi()
+      ]);
+      if (ttRes?.length) setTimeTableData(ttRes);
+      if (pdfRes?.pdfUrl) setPdfUrl(pdfRes.pdfUrl);
+      if (pdfRes?.ruleBookUrl) setRuleBookUrl(pdfRes.ruleBookUrl);
+      if (ingRes) setIngredients(ingRes);
     } catch (error) {
+      console.error("Error fetching menu page data:", error);
+    } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
-  const MondayNest = [
-    {
-      key: '1',
-      label: 'Breakfast',
-      children: generateMealTypeComponent(mondayData.filter((day) => day.Type === 'Breakfast')[0]?.Items || []),
-    },
-    {
-      key: '2',
-      label: 'Lunch',
-      children: generateMealTypeComponent(mondayData.filter((day) => day.Type === 'Lunch')[0]?.Items || []),
-    },
-    {
-      key: '3',
-      label: 'Snacks',
-      children: generateMealTypeComponent(mondayData.filter((day) => day.Type === 'Snacks')[0]?.Items || []),
-    },
-    {
-      key: '4',
-      label: 'Dinner',
-      children: generateMealTypeComponent(mondayData.filter((day) => day.Type === 'Dinner')[0]?.Items || []),
-    },
-  ];
+  const handleDownloadPdf = () => {
+    window.print();
+  };
 
-  const TuesdayNest = [
-    {
-      key: '1',
-      label: 'Breakfast',
-      children: generateMealTypeComponent(tuesdayData.filter((day) => day.Type === 'Breakfast')[0]?.Items || []),
-    },
-    {
-      key: '2',
-      label: 'Lunch',
-      children: generateMealTypeComponent(tuesdayData.filter((day) => day.Type === 'Lunch')[0]?.Items || []),
-    },
-    {
-      key: '3',
-      label: 'Snacks',
-      children: generateMealTypeComponent(tuesdayData.filter((day) => day.Type === 'Snacks')[0]?.Items || []),
-    },
-    {
-      key: '4',
-      label: 'Dinner',
-      children: generateMealTypeComponent(tuesdayData.filter((day) => day.Type === 'Dinner')[0]?.Items || []),
-    },
-  ];
-
-  const WednesdayNest = [
-    {
-      key: '1',
-      label: 'Breakfast',
-      children: generateMealTypeComponent(wednesdayData.filter((day) => day.Type === 'Breakfast')[0]?.Items || []),
-    },
-    {
-      key: '2',
-      label: 'Lunch',
-      children: generateMealTypeComponent(wednesdayData.filter((day) => day.Type === 'Lunch')[0]?.Items || []),
-    },
-    {
-      key: '3',
-      label: 'Snacks',
-      children: generateMealTypeComponent(wednesdayData.filter((day) => day.Type === 'Snacks')[0]?.Items || []),
-    },
-    {
-      key: '4',
-      label: 'Dinner',
-      children: generateMealTypeComponent(wednesdayData.filter((day) => day.Type === 'Dinner')[0]?.Items || []),
-    },
-  ];
-
-  const ThursdayNest = [
-    {
-      key: '1',
-      label: 'Breakfast',
-      children: generateMealTypeComponent(thursdayData.filter((day) => day.Type === 'Breakfast')[0]?.Items || []),
-    },
-    {
-      key: '2',
-      label: 'Lunch',
-      children: generateMealTypeComponent(thursdayData.filter((day) => day.Type === 'Lunch')[0]?.Items || []),
-    },
-    {
-      key: '3',
-      label: 'Snacks',
-      children: generateMealTypeComponent(thursdayData.filter((day) => day.Type === 'Snacks')[0]?.Items || []),
-    },
-    {
-      key: '4',
-      label: 'Dinner',
-      children: generateMealTypeComponent(thursdayData.filter((day) => day.Type === 'Dinner')[0]?.Items || []),
-    },
-  ];
-
-  const FridayNest = [
-    {
-      key: '1',
-      label: 'Breakfast',
-      children: generateMealTypeComponent(fridayData.filter((day) => day.Type === 'Breakfast')[0]?.Items || []),
-    },
-    {
-      key: '2',
-      label: 'Lunch',
-      children: generateMealTypeComponent(fridayData.filter((day) => day.Type === 'Lunch')[0]?.Items || []),
-    },
-    {
-      key: '3',
-      label: 'Snacks',
-      children: generateMealTypeComponent(fridayData.filter((day) => day.Type === 'Snacks')[0]?.Items || []),
-    },
-    {
-      key: '4',
-      label: 'Dinner',
-      children: generateMealTypeComponent(fridayData.filter((day) => day.Type === 'Dinner')[0]?.Items || []),
-    },
-  ];
-
-  const SaturdayNest = [
-    {
-      key: '1',
-      label: 'Breakfast',
-      children: generateMealTypeComponent(saturdayData.filter((day) => day.Type === 'Breakfast')[0]?.Items || []),
-    },
-    {
-      key: '2',
-      label: 'Lunch',
-      children: generateMealTypeComponent(saturdayData.filter((day) => day.Type === 'Lunch')[0]?.Items || []),
-    },
-    {
-      key: '3',
-      label: 'Snacks',
-      children: generateMealTypeComponent(saturdayData.filter((day) => day.Type === 'Snacks')[0]?.Items || []),
-    },
-    {
-      key: '4',
-      label: 'Dinner',
-      children: generateMealTypeComponent(saturdayData.filter((day) => day.Type === 'Dinner')[0]?.Items || []),
-    },
-  ];
-
-  const SundayNest = [
-    {
-      key: '1',
-      label: 'Breakfast',
-      children: generateMealTypeComponent(sundayData.filter((day) => day.Type === 'Breakfast')[0]?.Items || []),
-    },
-    {
-      key: '2',
-      label: 'Lunch',
-      children: generateMealTypeComponent(sundayData.filter((day) => day.Type === 'Lunch')[0]?.Items || []),
-    },
-    {
-      key: '3',
-      label: 'Snacks',
-      children: generateMealTypeComponent(sundayData.filter((day) => day.Type === 'Snacks')[0]?.Items || []),
-    },
-    {
-      key: '4',
-      label: 'Dinner',
-      children: generateMealTypeComponent(sundayData.filter((day) => day.Type === 'Dinner')[0]?.Items || []),
-    },
-  ];
-
-  const items = [
-    {
-      key: '1',
-      label: 'Monday',
-      children: <Collapse defaultActiveKey={['1', '2', '3', '4']} size="large" items={MondayNest} />,
-    },
-    {
-      key: '2',
-      label: 'Tuesday',
-      children: <Collapse defaultActiveKey={['1', '2', '3', '4']} size="large" items={TuesdayNest} />,
-    },
-    {
-      key: '3',
-      label: 'Wednesday',
-      children: <Collapse defaultActiveKey={['1', '2', '3', '4']} size="large" items={WednesdayNest} />,
-    },
-    {
-      key: '4',
-      label: 'Thursday',
-      children: <Collapse defaultActiveKey={['1', '2', '3', '4']} size="large" items={ThursdayNest} />,
-    },
-    {
-      key: '5',
-      label: 'Friday',
-      children: <Collapse defaultActiveKey={['1', '2', '3', '4']} size="large" items={FridayNest} />,
-    },
-    {
-      key: '6',
-      label: 'Saturday',
-      children: <Collapse defaultActiveKey={['1', '2', '3', '4']} size="large" items={SaturdayNest} />,
-    },
-
-    {
-      key: '7',
-      label: 'Sunday',
-      children: <Collapse defaultActiveKey={['1', '2', '3', '4']} size="large" items={SundayNest} />,
-    },
-  ];
   return (
-    <>
-      <Container maxWidth="xl">
-        <Typography variant="h4" sx={{ mb: 5 }}>
-          Menu
-        </Typography>
-        <Spin spinning={loading} size="medium">
-          <Collapse defaultActiveKey={today} size="large" items={items} />
-        </Spin>
-      </Container>
-    </>
+    <Container maxWidth="xl">
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .printable-menu, .printable-menu * { visibility: visible; }
+          .printable-menu { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+      `}</style>
+      <Box sx={{ py: 2 }}>
+        
+        {/* NEW FEATURES SECTION */}
+        <Grid container spacing={4} sx={{ mb: 4 }}>
+          {/* PDF VIEW CARD */}
+          <Grid item xs={12} md={4}>
+            <Card title={<Typography variant="h6" sx={{ color: '#6c1b85', fontWeight: 700 }}>Official PDF Menu</Typography>} bordered={false} style={{ height: '100%', borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+               {pdfUrl ? (
+                 <Stack spacing={2} alignItems="flex-start">
+                   <Typography variant="body2" color="text.secondary">
+                     View the verified monthly menu uploaded by your mess manager.
+                   </Typography>
+                    <Button 
+                      variant="contained" 
+                      startIcon={<PictureAsPdfIcon />} 
+                      component="a"
+                      href={pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ bgcolor: '#ffad4a', color: '#2E0845', '&:hover': { bgcolor: '#e89520' }, borderRadius: 2, width: '100%', justifyContent: 'flex-start' }}
+                    >
+                      Monthly Menu PDF
+                    </Button>
+                    
+                    <Button 
+                      variant="outlined" 
+                      startIcon={<PictureAsPdfIcon />} 
+                      onClick={handleDownloadPdf}
+                      sx={{ borderColor: '#2E0845', color: '#2E0845', '&:hover': { borderColor: '#6c1b85', bgcolor: 'rgba(108,27,133,0.05)' }, borderRadius: 2, width: '100%', justifyContent: 'flex-start' }}
+                    >
+                      Download Current Schedule (PDF)
+                    </Button>
+
+                    {ruleBookUrl && (
+                      <Button 
+                        variant="outlined" 
+                        startIcon={<PictureAsPdfIcon />} 
+                        component="a"
+                        href={ruleBookUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ borderColor: '#2E0845', color: '#2E0845', '&:hover': { borderColor: '#6c1b85', bgcolor: 'rgba(108,27,133,0.05)' }, borderRadius: 2, width: '100%', justifyContent: 'flex-start' }}
+                      >
+                        Official Rule Book
+                      </Button>
+                    )}
+                 </Stack>
+               ) : (
+                 <Stack spacing={2}>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                        No official PDF document has been uploaded for your mess yet.
+                    </Typography>
+                    <Button 
+                      variant="outlined" 
+                      startIcon={<PictureAsPdfIcon />} 
+                      onClick={handleDownloadPdf}
+                      sx={{ borderColor: '#2E0845', color: '#2E0845', '&:hover': { borderColor: '#6c1b85', bgcolor: 'rgba(108,27,133,0.05)' }, borderRadius: 2, width: '100%', justifyContent: 'flex-start' }}
+                    >
+                      Download Current Schedule (PDF)
+                    </Button>
+                 </Stack>
+               )}
+            </Card>
+          </Grid>
+          
+          {/* INGREDIENTS TRACKER CARD */}
+          <Grid item xs={12} md={8}>
+             <Card title={<Typography variant="h6" sx={{ color: '#6c1b85', fontWeight: 700 }}>Ingredient Transparency</Typography>} bordered={false} style={{ height: '100%', borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                {ingredients ? (
+                  <Grid container spacing={2}>
+                     <Grid item xs={6} sm={4}>
+                        <Typography variant="caption" color="text.secondary">Rice Brand</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{ingredients.brands?.rice || '--'}</Typography>
+                     </Grid>
+                     <Grid item xs={6} sm={4}>
+                        <Typography variant="caption" color="text.secondary">Flour Brand</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{ingredients.brands?.flour || '--'}</Typography>
+                     </Grid>
+                     <Grid item xs={6} sm={4}>
+                        <Typography variant="caption" color="text.secondary">Oil Brand</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{ingredients.brands?.oil || '--'}</Typography>
+                     </Grid>
+                     <Grid item xs={6} sm={4}>
+                        <Typography variant="caption" color="text.secondary">Spices Brand</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{ingredients.brands?.spices || '--'}</Typography>
+                     </Grid>
+                     <Grid item xs={6} sm={4}>
+                        <Typography variant="caption" color="text.secondary">Ice-Cream</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{ingredients.brands?.iceCream || '--'}</Typography>
+                     </Grid>
+                     <Grid item xs={6} sm={4}>
+                        <Typography variant="caption" color="text.secondary">Dairy Provider</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{ingredients.brands?.dairy || '--'}</Typography>
+                     </Grid>
+                     <Grid item xs={6} sm={4}>
+                        <Typography variant="caption" color="text.secondary">Other Brands</Typography>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{ingredients.brands?.other || '--'}</Typography>
+                     </Grid>
+                     {ingredients.qualityNotes && (
+                       <Grid item xs={12} sx={{ mt: 1 }}>
+                          <Typography variant="caption" color="text.secondary">Manager's Quality Notes</Typography>
+                          <Typography variant="body2" sx={{ bgcolor: 'rgba(255,173,74,0.1)', p: 1.5, borderRadius: 2, borderLeft: '4px solid #ffad4a' }}>
+                            {ingredients.qualityNotes}
+                          </Typography>
+                       </Grid>
+                     )}
+                  </Grid>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    Ingredients quality information has not been published by your manager.
+                  </Typography>
+                )}
+             </Card>
+          </Grid>
+        </Grid>
+
+        <Divider style={{ borderColor: 'rgba(108,27,133,0.1)' }} />
+
+        <Box className="printable-menu">
+            <MenuCalendar 
+                loading={loading} 
+                data={timeTableData} 
+                title="Current Mess Menu" 
+            />
+        </Box>
+      </Box>
+    </Container>
   );
 };
+
 export default MyMenuPage;

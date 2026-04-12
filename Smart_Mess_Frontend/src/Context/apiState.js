@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 // import { toast } from 'react-toastify';
 import ApiContext from './apiContext';
 
@@ -9,7 +10,7 @@ const ApiState = (props) => {
   const getAllNotificatons = async () => {
     try {
       const url = `${API_ENDPOINT}/user/dashboard/notifications`;
-      let response = await fetch(url, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -17,8 +18,10 @@ const ApiState = (props) => {
         },
       });
 
-      response = await response.json();
-      response.forEach((item) => {
+      const data = await response.json();
+      const safeData = Array.isArray(data) ? data : [];
+
+      safeData.forEach((item) => {
         item.id = item._id;
         item.title = item.Title;
         item.description = item.Description;
@@ -29,14 +32,14 @@ const ApiState = (props) => {
       });
 
       const userJSON = localStorage.getItem('user');
-      let filteredResponse = response;
+      let filteredResponse = safeData;
 
       console.log('filteredResponse', filteredResponse);
 
       if (userJSON) {
         const user = JSON.parse(userJSON);
         if (user.Role === 'manager') {
-          filteredResponse = response.filter((item) => item.type !== 'feedback');
+          filteredResponse = safeData.filter((item) => item.type !== 'feedback');
         }
       }
       setNotifications(filteredResponse);
@@ -57,7 +60,7 @@ const ApiState = (props) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ notifId: id, type: type }),
+        body: JSON.stringify({ notifId: id, type }),
 
       });
 
@@ -105,6 +108,10 @@ const ApiState = (props) => {
       {props.children}
     </ApiContext.Provider>
   );
+};
+
+ApiState.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default ApiState;

@@ -273,12 +273,50 @@ export const getAllFoodItems = async (req: any, res: Response) => {
         Name: foodItems[i].Name,
         Id: foodItems[i]._id,
         Img: foodItems[i].Image,
+        Category: foodItems[i].Category,
       });
     }
     return res.send(allItemNames).status(200);
   } catch (err) {
     console.log(err);
     return res.send({ Error: "Internal Server Error" }).status(501);
+  }
+};
+
+export const updateFoodItem = async (req: any, res: Response) => {
+  const { id, name, image, category } = req.body;
+  if (!id || !name || !image || !category) {
+    return res.status(400).send("Missing required fields");
+  }
+  try {
+    const updated = await mealItem.findByIdAndUpdate(id, { Name: name, Image: image, Category: category });
+    if (!updated) return res.status(404).send("Item Not Found");
+    return res.status(200).send("Updated successfully");
+  } catch (err) {
+    console.log(err);
+    res.status(501).send("Internal Server Error");
+  }
+};
+
+export const deleteFoodItem = async (req: any, res: Response) => {
+  const { id } = req.params;
+  if (!id) return res.status(400).send("Missing item ID");
+  try {
+    const deleted = await mealItem.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).send("Item Not Found");
+    
+    // Also remove from all time tables globally so it doesn't break rendering
+    await menuTable.updateMany(
+      {},
+      { $pull: { Meal_Items: new mongoose.Types.ObjectId(id) } }
+    );
+    myCache.del("manTT");
+    myCache.del("userTT");
+    
+    return res.status(200).send("Deleted successfully");
+  } catch (err) {
+    console.log(err);
+    res.status(501).send("Internal Server Error");
   }
 };
 
