@@ -1,4 +1,5 @@
 import * as React from 'react';
+import PropTypes from 'prop-types';
 import {
   Avatar,
   Box,
@@ -29,7 +30,7 @@ import { markAsResolvedAdmin, reopenSuggestionAPI, voteResolutionAPI } from './a
 
 const audienceLabels = {
   management: 'Secy & Mess Manager',
-  dean: 'Dean SW',
+  dean: 'SW Office',
   students: 'Students',
 };
 
@@ -59,6 +60,7 @@ export default function SuggestionCard({
   canDelete,
   deleteSuggestion,
   discusson,
+  // eslint-disable-next-line no-unused-vars
   isMobile,
 }) {
   const navigate = useNavigate();
@@ -88,10 +90,10 @@ export default function SuggestionCard({
   const hasRejectedResponse = containsUserId(resDownvotes, user?._id);
   const latestOfficialResponse = officialResponses[0] || (suggestions?.officialResponse
     ? {
-        response: suggestions.officialResponse,
-        attachment: suggestions.officialAttachment,
-        respondedByRole: suggestions?.resolvedByRole || 'authority',
-      }
+      response: suggestions.officialResponse,
+      attachment: suggestions.officialAttachment,
+      respondedByRole: suggestions?.resolvedByRole || 'authority',
+    }
     : null);
 
   const handleVote = async (isUpvote) => {
@@ -276,12 +278,12 @@ export default function SuggestionCard({
                 sx={{
                   alignSelf: 'flex-start',
                   p: 0,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    color: '#6e1d86',
-                  }}
-                >
-                  {expanded ? 'Show less' : 'Read full complaint'}
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  color: '#6e1d86',
+                }}
+              >
+                {expanded ? 'Show less' : 'Read full complaint'}
               </Button>
             )}
 
@@ -635,3 +637,39 @@ export default function SuggestionCard({
     </>
   );
 }
+
+SuggestionCard.propTypes = {
+  user: PropTypes.shape({
+    _id: PropTypes.string,
+    Username: PropTypes.string,
+    Image: PropTypes.string,
+  }),
+  suggestions: PropTypes.shape({
+    _id: PropTypes.string,
+    suggestionTitle: PropTypes.string,
+    suggestion: PropTypes.string,
+    suggestionType: PropTypes.string,
+    image: PropTypes.string,
+    status: PropTypes.string,
+    userId: PropTypes.shape({
+      _id: PropTypes.string,
+      Username: PropTypes.string,
+      Image: PropTypes.string,
+    }),
+    createdAt: PropTypes.string,
+    upvotes: PropTypes.array,
+    downvotes: PropTypes.array,
+    resolutionUpvotes: PropTypes.array,
+    resolutionDownvotes: PropTypes.array,
+    responseHistory: PropTypes.array,
+    targetAudience: PropTypes.string,
+    officialResponse: PropTypes.string,
+    officialAttachment: PropTypes.string,
+    resolvedByRole: PropTypes.string,
+  }),
+  disable: PropTypes.bool,
+  canDelete: PropTypes.bool,
+  deleteSuggestion: PropTypes.func,
+  discusson: PropTypes.bool,
+  isMobile: PropTypes.bool,
+};

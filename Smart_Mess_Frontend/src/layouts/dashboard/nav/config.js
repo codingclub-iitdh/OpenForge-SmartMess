@@ -37,7 +37,7 @@ const navConfig = [
     roles: ["manager", "secy"],
   },
   {
-    title: 'Manager Portal',
+    title: 'SW Office Dashboard',
     path: '/dashboard/summary',
     icon: icon('ic_summary'),
     roles: ["manager", "secy", "dean"],

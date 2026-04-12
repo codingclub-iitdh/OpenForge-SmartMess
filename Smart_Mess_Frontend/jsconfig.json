@@ -2,11 +2,13 @@
   "compilerOptions": {
     "target": "es6",
     "module": "commonjs",
-    "baseUrl": "."
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0"
   },
   "include": [
-    "src/**/*"
-, "public/firebase-messaging-sw.js"  ],
+    "src/**/*",
+    "public/firebase-messaging-sw.js"
+  ],
   "exclude": [
     "node_modules"
   ]

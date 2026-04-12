@@ -1,7 +1,7 @@
 import React from 'react';
-import { Card, Collapse, Spin, Divider } from 'antd';
+import PropTypes from 'prop-types';
+import { Card, Collapse, Spin } from 'antd';
 import { Grid, Typography, Box, Stack, Tooltip } from '@mui/material';
-import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 const { Meta } = Card;
@@ -25,9 +25,9 @@ const MenuCalendar = ({ loading, data, title = "Weekly Highlights" }) => {
                 <Tooltip title={`Category: ${item?.Category || 'Standard'}`} arrow>
                   <Card
                     hoverable
-                    sx={{ 
-                      borderRadius: 3, 
-                      overflow: 'hidden', 
+                    sx={{
+                      borderRadius: 3,
+                      overflow: 'hidden',
                       height: '100%',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                       border: '1px solid rgba(108,27,133,0.1)',
@@ -35,24 +35,24 @@ const MenuCalendar = ({ loading, data, title = "Weekly Highlights" }) => {
                     }}
                   >
                     <Box sx={{ p: 2, position: 'relative' }}>
-                       <Box sx={{ 
-                          position: 'absolute', 
-                          top: 10, 
-                          right: 10, 
-                          bgcolor: 'rgba(255,173,74,0.9)', 
-                          color: '#2E0845', 
-                          px: 1, 
-                          borderRadius: 1, 
-                          fontSize: '0.7rem', 
-                          fontWeight: 800,
-                          zIndex: 1
-                        }}>
-                          LIVE
-                        </Box>
-                        <Meta 
-                          title={<Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mt: 1 }}>{item?.Name}</Typography>} 
-                          description={null}
-                        />
+                      <Box sx={{
+                        position: 'absolute',
+                        top: 10,
+                        right: 10,
+                        bgcolor: 'rgba(255,173,74,0.9)',
+                        color: '#2E0845',
+                        px: 1,
+                        borderRadius: 1,
+                        fontSize: '0.7rem',
+                        fontWeight: 800,
+                        zIndex: 1
+                      }}>
+                        LIVE
+                      </Box>
+                      <Meta
+                        title={<Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mt: 1 }}>{item?.Name}</Typography>}
+                        description={null}
+                      />
                     </Box>
                   </Card>
                 </Tooltip>
@@ -68,26 +68,24 @@ const MenuCalendar = ({ loading, data, title = "Weekly Highlights" }) => {
     );
   };
 
-  const getDayTabs = (day) => {
-    return MEAL_TYPES.map(type => {
-      let timeLabel = '';
-      if (type === 'Breakfast') timeLabel = day === 'Sunday' ? '07:30 AM - 09:45 AM' : '07:30 AM - 09:30 AM';
-      else if (type === 'Lunch') timeLabel = '12:30 PM - 02:30 PM';
-      else if (type === 'Snacks') timeLabel = '04:30 PM - 06:00 PM';
-      else if (type === 'Dinner') timeLabel = '07:30 PM - 09:30 PM';
+  const getDayTabs = (day) => MEAL_TYPES.map(type => {
+    let timeLabel = '';
+    if (type === 'Breakfast') timeLabel = day === 'Sunday' ? '07:30 AM - 09:45 AM' : '07:30 AM - 09:30 AM';
+    else if (type === 'Lunch') timeLabel = '12:30 PM - 02:30 PM';
+    else if (type === 'Snacks') timeLabel = '04:30 PM - 06:00 PM';
+    else if (type === 'Dinner') timeLabel = '07:30 PM - 09:30 PM';
 
-      return {
-        key: `${day}-${type}`,
-        label: (
-          <Stack direction="row" spacing={1} alignItems="center">
-            <AccessTimeIcon sx={{ fontSize: 18, color: '#ffad4a' }} />
-            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{type} <span style={{opacity: 0.7, fontWeight: 500}}>({timeLabel})</span></Typography>
-          </Stack>
-        ),
-        children: renderMealSection(day, type),
-      };
-    });
-  };
+    return {
+      key: `${day}-${type}`,
+      label: (
+        <Stack direction="row" spacing={1} alignItems="center">
+          <AccessTimeIcon sx={{ fontSize: 18, color: '#ffad4a' }} />
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{type} <span style={{ opacity: 0.7, fontWeight: 500 }}>({timeLabel})</span></Typography>
+        </Stack>
+      ),
+      children: renderMealSection(day, type),
+    };
+  });
 
   const dayCollapseItems = days.map((day, index) => ({
     key: (index + 1).toString(),
@@ -97,12 +95,12 @@ const MenuCalendar = ({ loading, data, title = "Weekly Highlights" }) => {
       </Typography>
     ),
     children: (
-        <Collapse 
-            ghost 
-            defaultActiveKey={MEAL_TYPES.map(t => `${day}-${t}`)} 
-            items={getDayTabs(day)} 
-            expandIconPosition="end"
-        />
+      <Collapse
+        ghost
+        defaultActiveKey={MEAL_TYPES.map(t => `${day}-${t}`)}
+        items={getDayTabs(day)}
+        expandIconPosition="end"
+      />
     ),
   }));
 
@@ -116,28 +114,38 @@ const MenuCalendar = ({ loading, data, title = "Weekly Highlights" }) => {
       </Stack>
 
       <Spin spinning={loading} size="large" tip="Synchronizing Canteen Menu...">
-        <Collapse 
-            accordion 
-            defaultActiveKey={[todayIndex.toString()]} 
-            size="large" 
-            items={dayCollapseItems} 
-            sx={{ 
-                bgcolor: 'transparent',
-                '& .ant-collapse-item': {
-                    mb: 2,
-                    borderRadius: '12px !important',
-                    border: '1px solid rgba(108,27,133,0.1) !important',
-                    overflow: 'hidden',
-                    bgcolor: 'white'
-                },
-                '& .ant-collapse-header': {
-                    alignItems: 'center !important'
-                }
-            }}
+        <Collapse
+          accordion
+          defaultActiveKey={[todayIndex.toString()]}
+          size="large"
+          items={dayCollapseItems}
+          sx={{
+            bgcolor: 'transparent',
+            '& .ant-collapse-item': {
+              mb: 2,
+              borderRadius: '12px !important',
+              border: '1px solid rgba(108,27,133,0.1) !important',
+              overflow: 'hidden',
+              bgcolor: 'white'
+            },
+            '& .ant-collapse-header': {
+              alignItems: 'center !important'
+            }
+          }}
         />
       </Spin>
     </Box>
   );
+};
+
+MenuCalendar.propTypes = {
+  loading: PropTypes.bool.isRequired,
+  data: PropTypes.arrayOf(PropTypes.shape({
+    Day: PropTypes.string.isRequired,
+    Type: PropTypes.string.isRequired,
+    Items: PropTypes.array,
+  })).isRequired,
+  title: PropTypes.string,
 };
 
 export default MenuCalendar;

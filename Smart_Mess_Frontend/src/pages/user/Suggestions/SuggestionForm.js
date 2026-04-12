@@ -31,7 +31,7 @@ import '../index.css';
 
 const audienceOptions = [
   { value: 'management', label: 'Secy & Mess Manager' },
-  { value: 'dean', label: 'Dean SW' },
+  { value: 'dean', label: 'SW Office' },
   { value: 'students', label: 'Students' },
 ];
 
@@ -115,9 +115,9 @@ const SuggestionForm = ({ initialAudience = defaultAudience, onSubmitted }) => {
     suggestion.targetAudience.length === audienceOptions.length
       ? 'All'
       : audienceOptions
-          .filter((option) => suggestion.targetAudience.includes(option.value))
-          .map((option) => option.label)
-          .join(', ');
+        .filter((option) => suggestion.targetAudience.includes(option.value))
+        .map((option) => option.label)
+        .join(', ');
 
   return (
     <Card
@@ -195,9 +195,9 @@ const SuggestionForm = ({ initialAudience = defaultAudience, onSubmitted }) => {
               selected.length === audienceOptions.length
                 ? 'All'
                 : audienceOptions
-                    .filter((option) => selected.includes(option.value))
-                    .map((option) => option.label)
-                    .join(', ')
+                  .filter((option) => selected.includes(option.value))
+                  .map((option) => option.label)
+                  .join(', ')
             }
             sx={{
               borderRadius: 4,

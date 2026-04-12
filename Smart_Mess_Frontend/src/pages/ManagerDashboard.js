@@ -18,7 +18,7 @@ const ManagerDashboard = () => {
     const [filterData, setFilterData] = useState([]);
     const [availableItems, setAvailableItems] = useState(null);
     const [allFoodItems, setAllFoodItems] = useState([]);
-    
+
     // New States for Redesign Features
     const [suggestions, setSuggestions] = useState([]);
     const [loadingSuggestions, setLoadingSuggestions] = useState(true);
@@ -63,8 +63,8 @@ const ManagerDashboard = () => {
             const res = await getAllSuggestions();
             const suggestionsArray = res?.data?.suggestions || [];
             // Filter to only show OPEN suggestions and take top 5
-            const openSuggestions = Array.isArray(suggestionsArray) 
-                ? [...suggestionsArray].reverse().filter(s => s.status === 'open').slice(0, 5) 
+            const openSuggestions = Array.isArray(suggestionsArray)
+                ? [...suggestionsArray].reverse().filter(s => s.status === 'open').slice(0, 5)
                 : [];
             setSuggestions(openSuggestions);
         } catch (error) {
@@ -108,10 +108,10 @@ const ManagerDashboard = () => {
         timeSeriesData.forEach((ele) => {
             if (ele.FoodItemId === foodId) {
                 const date = new Date(ele.Date);
-                currItems.push({ 
-                    'Date': `${date.getDate()}/${date.getMonth() + 1}`, 
-                    'Rating': ele.Rating, 
-                    'NoOfReviews': ele.NoOfReviews 
+                currItems.push({
+                    'Date': `${date.getDate()}/${date.getMonth() + 1}`,
+                    'Rating': ele.Rating,
+                    'NoOfReviews': ele.NoOfReviews
                 });
             }
         });
@@ -152,17 +152,17 @@ const ManagerDashboard = () => {
     // Dynamic Summary Stats logic
     const openIssuesCount = suggestions.length > 0 ? `${suggestions.length}+` : "0";
     const totalFoodTracked = allFoodItems.length;
-    
+
     // Quick average rating calculation from whatever is currently graphed
-    const avgRating = filterData.length > 0 
-        ? (filterData.reduce((acc, curr) => acc + curr.Rating, 0) / filterData.length).toFixed(1) 
+    const avgRating = filterData.length > 0
+        ? (filterData.reduce((acc, curr) => acc + curr.Rating, 0) / filterData.length).toFixed(1)
         : "N/A";
 
     return (
         <Container maxWidth="xl">
             <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4}>
                 <Typography variant="h3" sx={{ color: '#2E0845', fontWeight: 800, fontFamily: "'DM Serif Display', serif" }}>
-                    Manager Portal Overview
+                    SW Office Dashboard Overview
                 </Typography>
             </Stack>
 
@@ -199,7 +199,7 @@ const ManagerDashboard = () => {
 
             {/* MAIN DASHBOARD GRID */}
             <Grid container spacing={3}>
-                
+
                 {/* Analytics Chart Block */}
                 <Grid item xs={12} md={8}>
                     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
@@ -249,7 +249,7 @@ const ManagerDashboard = () => {
                         </Box>
                         <Box sx={{ p: 2 }}>
                             {loadingSuggestions ? (
-                                <Box sx={{ display:'flex', justifyContent:'center', py: 5 }}><CircularProgress sx={{color: '#6c1b85'}}/></Box>
+                                <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}><CircularProgress sx={{ color: '#6c1b85' }} /></Box>
                             ) : suggestions.length === 0 ? (
                                 <Box sx={{ textAlign: 'center', py: 5 }}>
                                     <Typography variant="body2" color="textSecondary">No open complaints right now!</Typography>
@@ -257,7 +257,7 @@ const ManagerDashboard = () => {
                             ) : (
                                 <Stack spacing={2}>
                                     {suggestions.map((issue) => (
-                                        <Card key={issue._id} variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', borderColor: 'rgba(108,27,133,0.15)', cursor: 'pointer', '&:hover': { background: 'rgba(108,27,133,0.02)'} }} onClick={() => navigate('/dashboard/suggestions')}>
+                                        <Card key={issue._id} variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', borderColor: 'rgba(108,27,133,0.15)', cursor: 'pointer', '&:hover': { background: 'rgba(108,27,133,0.02)' } }} onClick={() => navigate('/dashboard/suggestions')}>
                                             <Avatar sx={{ bgcolor: 'rgba(255,173,74,0.2)', color: '#D48827', mr: 2 }}>
                                                 {issue.title ? issue.title.charAt(0).toUpperCase() : '!'}
                                             </Avatar>

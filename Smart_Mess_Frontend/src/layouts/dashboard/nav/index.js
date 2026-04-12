@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 // @mui
 import { styled } from '@mui/material/styles';
-import { Box, Link, Drawer, Typography, Avatar, Stack } from '@mui/material';
+import { Box, Link, Drawer, Typography, Avatar } from '@mui/material';
 // mock
 // hooks
 import useResponsive from '../../../hooks/useResponsive';
@@ -43,9 +43,7 @@ export default function Nav({ openNav, onCloseNav }) {
     user = await JSON.parse(user);
     setUser(user);
     // console.log(user)
-    const filterNavData = navConfig.filter((item) => {
-      return item.roles.includes(user?.Role) || item.roles.includes('all');
-    });
+    const filterNavData = navConfig.filter((item) => item.roles.includes(user?.Role) || item.roles.includes('all'));
     setNavSectionData(filterNavData);
     // setNavSectionData(navConfig)
   };
@@ -114,7 +112,10 @@ export default function Nav({ openNav, onCloseNav }) {
               </Typography>
 
               <Typography variant="body2" sx={{ color: '#ffad4a', fontWeight: 500, fontSize: '0.75rem' }}>
-                {user?.Role?.charAt(0).toUpperCase()+user?.Role?.slice(1)}
+                {(() => {
+                  const roleMap = { dean: 'SW Office', manager: 'Manager', secy: 'Secretary', user: 'Student' };
+                  return roleMap[user?.Role] || user?.Role?.charAt(0).toUpperCase() + user?.Role?.slice(1);
+                })()}
               </Typography>
             </Box>
           </StyledAccount>

@@ -1,12 +1,6 @@
 import { toast } from 'react-toastify';
 import { resquestNotificationPermission, getfirebaseToken } from '../notifications/firebase';
 
-const handleAuthError = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  window.location.href = process.env.REACT_APP_CLIENT_URL;
-};
-
 const Signin = async (code, requestedRole = 'user') => {
   try {
     const url = `${process.env.REACT_APP_SERVER_URL}/auth/signin/web`;
@@ -36,7 +30,7 @@ const handleNotification = async () => {
       const notificationToken = await getfirebaseToken();
       // console.log(notificationToken);
       const url = `${process.env.REACT_APP_SERVER_URL}/user/addNotificationToken/web`;
-      const response = await fetch(url, {
+      await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -129,9 +129,8 @@ export default function LoginPage() {
         >
           {/* MESS BLOCK BACKGROUND IMAGE */}
           <img
-            src={`https://res.cloudinary.com/dowydptqe/image/upload/w_${
-              isLaptop ? '3000' : isTablet ? '2000' : isMobile ? '1000' : 'auto'
-            }/f_auto,q_${isLaptop ? '70' : '40'}/v1711091762/smart_mess/cec9mipskbybpcbpz0tj.jpg`}
+            src={`https://res.cloudinary.com/dowydptqe/image/upload/w_${isLaptop ? '3000' : isTablet ? '2000' : isMobile ? '1000' : 'auto'
+              }/f_auto,q_${isLaptop ? '70' : '40'}/v1711091762/smart_mess/cec9mipskbybpcbpz0tj.jpg`}
             style={{
               height: '100%',
               width: '100%',
@@ -349,7 +348,7 @@ export default function LoginPage() {
                       transition: 'all 0.2s ease-in-out',
                     }}
                   >
-                    Login as Dean SW
+                    Login as SW Office
                   </Button>
                 </Stack>
               </Box>

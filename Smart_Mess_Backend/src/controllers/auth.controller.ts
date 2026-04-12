@@ -40,9 +40,9 @@ const webSigninHandler = async (req: Request, res: Response): Promise<Response |
                 console.log("Parsed Dean Emails:", deanEmails);
                 console.log("==================");
 
-                if (managerEmails.includes(normalizedUserEmail)) maxRole = "manager";
+                if (deanEmails.includes(normalizedUserEmail)) maxRole = "dean";
                 else if (secyEmails.includes(normalizedUserEmail)) maxRole = "secy";
-                else if (deanEmails.includes(normalizedUserEmail)) maxRole = "dean";
+                else if (managerEmails.includes(normalizedUserEmail)) maxRole = "manager";
 
                 if (!user) {
                     //create new user
@@ -68,7 +68,7 @@ const webSigninHandler = async (req: Request, res: Response): Promise<Response |
                 }
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-        
+
                 const analyticsRecord = await Analytics.findOne({ date: today });
                 if (analyticsRecord) {
                     // If record exists for today and the user's ID is not in visitorIds, add it
@@ -80,17 +80,17 @@ const webSigninHandler = async (req: Request, res: Response): Promise<Response |
                     }
                 } else {
                     // If no record exists for today, create a new one
-                    const newRecord =   await Analytics.create({
+                    const newRecord = await Analytics.create({
                         date: today,
                         uniqueVisitorsCount: 1,
                         visitorIds: [user._id.toString()]
                     });
-                    console.log("Created new analytics record for today:" , newRecord);
+                    console.log("Created new analytics record for today:", newRecord);
                 }
                 // console.log(user);
                 // Determine the ACTIVE Role for this session
                 let activeRole = maxRole;
-                
+
                 if (requestedRole) {
                     if (requestedRole === 'user') {
                         activeRole = 'user'; // Anyone can log in as a student
@@ -99,7 +99,21 @@ const webSigninHandler = async (req: Request, res: Response): Promise<Response |
                     } else if (requestedRole === 'dean' && maxRole === 'dean') {
                         activeRole = 'dean';
                     } else {
-                        return res.status(403).json({ message: "You don't have authorization for this portal." });
+                        console.log("=== AUTHORIZATION DENIED ===");
+                        console.log("Requested Role:", requestedRole);
+                        console.log("User Email:", normalizedUserEmail);
+                        console.log("Max Role Assigned:", maxRole);
+                        console.log("Dean Emails in Config:", deanEmails);
+                        console.log("=============================");
+                        return res.status(403).json({
+                            message: "You don't have authorization for this portal.",
+                            debug: {
+                                email: normalizedUserEmail,
+                                requestedRole,
+                                assignedRole: maxRole,
+                                deanEmails
+                            }
+                        });
                     }
                 }
 
@@ -112,7 +126,7 @@ const webSigninHandler = async (req: Request, res: Response): Promise<Response |
                     },
                 };
                 const token = createSession(payload);
-                
+
                 // Return explicitly requested role to frontend so routing works correctly
                 const returnUser = user.toObject();
                 returnUser.Role = activeRole as any;
@@ -142,7 +156,7 @@ const webSigninHandler = async (req: Request, res: Response): Promise<Response |
 
 const androidSigninHandler = async (req: Request, res: Response): Promise<Response | undefined> => {
     try {
-        const {Email,Username,Image,First_Name,Last_Name} = req.body;
+        const { Email, Username, Image, First_Name, Last_Name } = req.body;
         console.log(req.body);
         let user = await user_model.findOne({ Email: Email });
         let isNewUser = false;
@@ -159,9 +173,9 @@ const androidSigninHandler = async (req: Request, res: Response): Promise<Respon
         console.log("Parsed Dean Emails:", deanEmails);
         console.log("==================");
 
-        if (managerEmails.includes(normalizedUserEmail)) assignedRole = "manager";
+        if (deanEmails.includes(normalizedUserEmail)) assignedRole = "dean";
         else if (secyEmails.includes(normalizedUserEmail)) assignedRole = "secy";
-        else if (deanEmails.includes(normalizedUserEmail)) assignedRole = "dean";
+        else if (managerEmails.includes(normalizedUserEmail)) assignedRole = "manager";
 
         if (!user) {
             //create new user
@@ -203,4 +217,4 @@ const androidSigninHandler = async (req: Request, res: Response): Promise<Respon
 }
 
 
-export { webSigninHandler,androidSigninHandler };
+export { webSigninHandler, androidSigninHandler };

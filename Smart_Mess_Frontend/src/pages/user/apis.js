@@ -73,7 +73,7 @@ export const getoneSuggestion = async (suggestionId) => {
     const authToken = `Bearer ${token}`;
     const res = await axios.get(`${REACT_SERVER_URL}/user/profile/oneSuggestion`, {
       params: {
-        suggestionId: suggestionId,
+        suggestionId,
       },
       headers: {
         Authorization: authToken,

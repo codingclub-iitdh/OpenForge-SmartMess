@@ -37,7 +37,7 @@ const getAudienceLabel = (targetAudience: any) => {
 
   const labels: Record<AudienceType, string> = {
     management: "Secy & Mess Manager",
-    dean: "Dean SW",
+    dean: "SW Office",
     students: "Students",
   };
 
@@ -423,13 +423,13 @@ export const voteSuggestionComment = async (
     const updateType =
       req.body.upvote === true
         ? {
-            $addToSet: { "children.$.upvotes": currUser._id },
-            $pull: { "children.$.downvotes": currUser._id },
-          }
+          $addToSet: { "children.$.upvotes": currUser._id },
+          $pull: { "children.$.downvotes": currUser._id },
+        }
         : {
-            $pull: { "children.$.upvotes": currUser._id },
-            $addToSet: { "children.$.downvotes": currUser._id },
-          };
+          $pull: { "children.$.upvotes": currUser._id },
+          $addToSet: { "children.$.downvotes": currUser._id },
+        };
 
     const newVote = await SuggestionsModel.updateOne(
       {
@@ -705,13 +705,13 @@ export const voteResolution = async (
     const updateType =
       req.body.upvote === true
         ? {
-            $addToSet: { resolutionUpvotes: currUser._id },
-            $pull: { resolutionDownvotes: currUser._id },
-          }
+          $addToSet: { resolutionUpvotes: currUser._id },
+          $pull: { resolutionDownvotes: currUser._id },
+        }
         : {
-            $pull: { resolutionUpvotes: currUser._id },
-            $addToSet: { resolutionDownvotes: currUser._id },
-          };
+          $pull: { resolutionUpvotes: currUser._id },
+          $addToSet: { resolutionDownvotes: currUser._id },
+        };
 
     const newVote = await SuggestionsModel.updateOne(
       { _id: suggestionId },
