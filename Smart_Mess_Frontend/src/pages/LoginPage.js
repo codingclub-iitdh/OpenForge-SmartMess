@@ -44,13 +44,13 @@ export default function LoginPage() {
   const googleSuccess = async (res) => {
     setLoading(true);
     console.log('google success - requested role:', selectedRoleRef.current);
-    const code = res.code;
+    const { code } = res;
     if (code) {
       try {
         const response = await Signin(code, selectedRoleRef.current);
         if (!response || !response.ok) {
           const errText = response ? await response.text() : 'No response from server';
-          alert('Login failed: ' + errText);
+          alert(`Login failed: ${errText}`);
           setLoading(false);
           return;
         }
@@ -76,7 +76,7 @@ export default function LoginPage() {
           navigate('/dashboard', { replace: true });
         }
       } catch (err) {
-        alert('Login error: ' + err.message);
+        alert(`Login error: ${err.message}`);
       }
     }
     setLoading(false);
@@ -101,7 +101,7 @@ export default function LoginPage() {
   useEffect(() => {
     function start() {
       gapi.client.init({
-        clientId: clientId,
+        clientId,
         scope: '',
       });
     }

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import PropTypes from 'prop-types';
 import { useEffect } from 'react';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -12,16 +13,14 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import CommentForm from './CommentForm';
-import { deleteUserSuggestionComment, getUserSuggestion } from './apis';
-import { getoneSuggestion } from 'src/pages/user/apis.js';
-import { SocketContext } from '../../../Context/socket';
+import { deleteUserSuggestionComment } from './apis';
+import { getoneSuggestion } from '../apis';
 import CommentCard from './CommentCard';
 
 export default function UserActionsListComment({ Id, isMobile }) {
   const [openAdd, setOpenAdd] = React.useState(false);
   const [openView, setOpenView] = React.useState(false);
   const [comments, setComments] = React.useState([]);
-  const socket = React.useContext(SocketContext);
   const suggestionId = Id;
   const [user, setUser] = React.useState({});
   const getUser = async () => {
@@ -34,48 +33,23 @@ export default function UserActionsListComment({ Id, isMobile }) {
     try {
       getUser();
     } catch (error) {
-      console.log('error');
+      console.log('getUser error', error);
     }
   }, []);
+
   const deleteComment = async (commentId) => {
-    const res = await deleteUserSuggestionComment({ suggestionId: suggestionId, commentId: commentId });
-    setComments((comments) => {
-      return comments.filter((ele) => {
-        return ele._id != suggestionId;
-      });
-    });
-    // socket.emit('delete-suggestion', res.data.deletedSuggestion);
+    await deleteUserSuggestionComment({ suggestionId, commentId });
+    setComments((comments) => comments.filter((ele) => ele._id !== commentId));
   };
 
   const fetchUserComments = React.useCallback(async () => {
     const res = await getoneSuggestion(suggestionId);
     setComments(res?.data?.suggestion?.children || []);
-  }, []);
+  }, [suggestionId]);
 
   React.useEffect(() => {
-    let mounted = true;
-    if (mounted) {
-      fetchUserComments();
-    }
-    return () => {
-      mounted = false;
-    };
+    fetchUserComments();
   }, [fetchUserComments]);
-
-  //   React.useEffect(() => {
-  //     let mount = true;
-  //     if (mount) {
-  //       socket.on('new-post', () => {
-  //         fetchUserComments();
-  //       });
-  //     }
-  //     return () => {
-  //       mount = false;
-  //       // socket.off();
-  //     };
-  //   }, [socket]);
-
-  console.log(comments);
 
   return (
     <List
@@ -93,14 +67,14 @@ export default function UserActionsListComment({ Id, isMobile }) {
             justifyContent: 'center',
           }}
         >
-          <InboxIcon color={openAdd ? 'primary' : ''} />
+          <InboxIcon color={openAdd ? 'primary' : undefined} />
         </ListItemIcon>
         <ListItemText
           primary={
             <Typography
               variant="h5"
               sx={{ mb: 3, marginTop: 'auto', marginBottom: 'auto' }}
-              color={openAdd ? 'primary' : ''}
+              color={openAdd ? 'primary' : undefined}
             >
               Add a Comment
             </Typography>
@@ -129,14 +103,14 @@ export default function UserActionsListComment({ Id, isMobile }) {
             justifyContent: 'center',
           }}
         >
-          <InboxIcon color={openView ? 'primary' : ''} />
+          <InboxIcon color={openView ? 'primary' : undefined} />
         </ListItemIcon>
         <ListItemText
           primary={
             <Typography
               variant="h5"
               sx={{ mb: 3, marginTop: 'auto', marginBottom: 'auto' }}
-              color={openView ? 'primary' : ''}
+              color={openView ? 'primary' : undefined}
             >
               Your Comments
             </Typography>
@@ -154,13 +128,18 @@ export default function UserActionsListComment({ Id, isMobile }) {
             alignItems: 'center',
           }}
         >
-          {comments.map((ele) => {
-            if (ele.userId._id == user._id) {
-              return <CommentCard comments={ele} key={ele._id} canDelete deleteComment={deleteComment} />;
-            }
-          })}
+          {comments
+            .filter((ele) => ele.userId._id === user._id)
+            .map((ele) => (
+              <CommentCard comments={ele} key={ele._id} canDelete deleteComment={deleteComment} />
+            ))}
         </Paper>
       </Collapse>
     </List>
   );
 }
+
+UserActionsListComment.propTypes = {
+  Id: PropTypes.string.isRequired,
+  isMobile: PropTypes.bool,
+};

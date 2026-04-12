@@ -1,11 +1,11 @@
 import React, { useEffect, useContext, Suspense, lazy } from 'react';
 import { Navigate, useRoutes } from 'react-router-dom';
+import { Backdrop } from '@mui/material';
 // layouts
 import DashboardLayout from './layouts/dashboard';
 import SimpleLayout from './layouts/simple';
 //
 import ApiContext from './Context/apiContext';
-import { Backdrop } from '@mui/material';
 
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const Page404 = React.lazy(() => import('./pages/Page404'));

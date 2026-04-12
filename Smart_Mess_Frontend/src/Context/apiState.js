@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 // import { toast } from 'react-toastify';
 import ApiContext from './apiContext';
 
@@ -9,7 +10,7 @@ const ApiState = (props) => {
   const getAllNotificatons = async () => {
     try {
       const url = `${API_ENDPOINT}/user/dashboard/notifications`;
-      let response = await fetch(url, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -28,7 +29,6 @@ const ApiState = (props) => {
         item.type = item.messageType;
         item.createdAt = item.Date;
         item.isUnRead = !item.read;
-        item.SenderRole = item.SenderRole;
       });
 
       const userJSON = localStorage.getItem('user');
@@ -60,7 +60,7 @@ const ApiState = (props) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ notifId: id, type: type }),
+        body: JSON.stringify({ notifId: id, type }),
 
       });
 
@@ -108,6 +108,10 @@ const ApiState = (props) => {
       {props.children}
     </ApiContext.Provider>
   );
+};
+
+ApiState.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export default ApiState;

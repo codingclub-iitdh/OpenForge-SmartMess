@@ -13,7 +13,7 @@ export const getUserSuggestion = async () => {
     });
     return res;
   } catch (err) {
-    const mute = err;
+    console.error(err);
     return null;
   }
 };
@@ -64,7 +64,7 @@ export const patchUserSuggestion = async (data) => {
     });
     return res;
   } catch (err) {
-    const mute = err;
+    console.error(err);
     return null;
   }
 };
@@ -83,7 +83,7 @@ export const deleteUserSuggestion = async (data) => {
     });
     return res;
   } catch (err) {
-    const mute = err;
+    console.error(err);
     return null;
   }
 };
@@ -119,7 +119,7 @@ export const markAsresolved = async (suggestionId) => {
     const res = await axios.patch(
       `${REACT_SERVER_URL}/user/profile/suggestion/markAsClosed`,
       {
-        suggestionId: suggestionId,
+        suggestionId,
       },
       {
         headers: {

@@ -1,15 +1,15 @@
-import { Card, Container, Stack, Typography, Grid, Box, CircularProgress, Chip, Avatar, IconButton } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import { Card, Container, Stack, Typography, Grid, Box, CircularProgress, Avatar } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import { Select } from 'antd';
 import { LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Line, Legend, ResponsiveContainer } from 'recharts';
-import { CSSTransition } from 'react-transition-group';
+import { useNavigate } from 'react-router-dom';
 import '../utils/fadeAnimation.css';
-import { getAllSuggestions } from './user/apis';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import FastfoodIcon from '@mui/icons-material/Fastfood';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import { useNavigate } from 'react-router-dom';
+import { getAllSuggestions } from './user/apis';
 
 const ManagerDashboard = () => {
     const navigate = useNavigate();
@@ -18,48 +18,47 @@ const ManagerDashboard = () => {
     const [filterData, setFilterData] = useState([]);
     const [availableItems, setAvailableItems] = useState(null);
     const [allFoodItems, setAllFoodItems] = useState([]);
-    const [foodItemImage, setFoodItemImage] = useState(null);
     
     // New States for Redesign Features
     const [suggestions, setSuggestions] = useState([]);
     const [loadingSuggestions, setLoadingSuggestions] = useState(true);
 
-    const getAllTimeSeriesData = async () => {
+    const getAllTimeSeriesData = useCallback(async () => {
         try {
             const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/getTimeSeries`;
-            let res = await fetch(url, {
+            const res = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 }
             });
-            res = await res.json();
-            return res;
+            const data = await res.json();
+            return data;
         } catch (err) {
             console.log('error', err);
             return [];
         }
-    }
+    }, []);
 
-    const getAllFoodItems = async () => {
+    const fetchAllFoodItems = useCallback(async () => {
         try {
             const url = `${process.env.REACT_APP_SERVER_URL}/manager/dashboard/allFoodItems`;
-            let response = await fetch(url, {
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
             });
-            response = await response.json();
-            return response;
+            const data = await response.json();
+            return data;
         } catch (error) {
             console.log(error);
             return [];
         }
-    };
+    }, []);
 
-    const fetchSuggestions = async () => {
+    const fetchSuggestions = useCallback(async () => {
         try {
             const res = await getAllSuggestions();
             const suggestionsArray = res?.data?.suggestions || [];
@@ -73,17 +72,17 @@ const ManagerDashboard = () => {
         } finally {
             setLoadingSuggestions(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         getAllTimeSeriesData().then((res) => {
             setTimeSeriesData(res);
         });
-        getAllFoodItems().then((res) => {
+        fetchAllFoodItems().then((res) => {
             setAllFoodItems(res);
         });
         fetchSuggestions();
-    }, []);
+    }, [getAllTimeSeriesData, fetchAllFoodItems, fetchSuggestions]);
 
     useEffect(() => {
         if (timeSeriesData && allFoodItems && allFoodItems.length > 0) {
@@ -101,38 +100,34 @@ const ManagerDashboard = () => {
                 }
             });
             setAvailableItems(arr);
-            
-            // Auto-select first item for better UX if none selected
-            if (!selected && arr.length > 0) {
-                onChange(arr[0].value);
-            }
         }
     }, [timeSeriesData, allFoodItems]);
 
-    const filterHandler = (foodId) => {
-        const ele = allFoodItems.filter((x) => x.Id === foodId);
-        if(ele && ele.length > 0) {
-            setFoodItemImage(ele[0].Img);
-        }
-        let currItems = [];
+    const filterHandler = useCallback((foodId) => {
+        const currItems = [];
         timeSeriesData.forEach((ele) => {
             if (ele.FoodItemId === foodId) {
                 const date = new Date(ele.Date);
-                currItems.push({ 'Date': date.toUTCString(), 'Rating': ele.Rating, 'NoOfReviews': ele.NoOfReviews });
+                currItems.push({ 
+                    'Date': `${date.getDate()}/${date.getMonth() + 1}`, 
+                    'Rating': ele.Rating, 
+                    'NoOfReviews': ele.NoOfReviews 
+                });
             }
-        })
-        currItems = currItems.filter((ele) => {
-            const newDate = new Date(ele.Date);
-            ele.Date = `${newDate.getDate()}/${newDate.getMonth() + 1}`;
-            return ele;
-        })
+        });
         setFilterData(currItems);
-    }
+    }, [timeSeriesData]);
 
-    const onChange = (value) => {
+    const onChange = useCallback((value) => {
         filterHandler(value);
         setSelected(value);
-    };
+    }, [filterHandler]);
+
+    useEffect(() => {
+        if (availableItems && availableItems.length > 0 && !selected) {
+            onChange(availableItems[0].value);
+        }
+    }, [availableItems, selected, onChange]);
 
     const filterOption = (input, option) =>
         (option?.label ?? '').toLowerCase().includes(input.toLowerCase());
@@ -150,8 +145,12 @@ const ManagerDashboard = () => {
         />
     );
 
+    SelectFood.propTypes = {
+        options: PropTypes.array
+    };
+
     // Dynamic Summary Stats logic
-    const openIssuesCount = suggestions.length > 0 ? suggestions.length + "+" : "0";
+    const openIssuesCount = suggestions.length > 0 ? `${suggestions.length}+` : "0";
     const totalFoodTracked = allFoodItems.length;
     
     // Quick average rating calculation from whatever is currently graphed

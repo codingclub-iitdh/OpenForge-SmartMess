@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Spin, Modal, Form, Input, Select, Popconfirm, message, Tabs, Divider } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Typography, Card, Box, Grid, Stack, Button, IconButton } from '@mui/material';
-import { getDashTimeTable, getAllFoodIitems, addFoodItem, delFoodItem, updateFoodItemApi, getFoodItemRating, createFoodItem } from '../../../utils/apis';
 import StarIcon from '@mui/icons-material/Star';
+import { getDashTimeTable, getAllFoodIitems, addFoodItem, delFoodItem, updateFoodItemApi, getFoodItemRating, createFoodItem } from '../../../utils/apis';
 
 const { Option } = Select;
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Snacks', 'Dinner'];
@@ -137,7 +137,7 @@ const VisualTimetableEditor = () => {
        } else {
          message.error("Failed to update item");
        }
-     } catch(e) {}
+     } catch(e) { console.error(e); }
   };
 
   const submitCreateRecipe = async () => {

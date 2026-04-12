@@ -1,4 +1,5 @@
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import {
   Accordion,
   AccordionDetails,
@@ -19,13 +20,13 @@ import {
   Stack,
 } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import { v4 as uuid } from 'uuid';
-import { postUserSuggestion } from './apis';
-import { toast } from 'react-toastify';
-import { SocketContext } from 'src/Context/socket';
-import imageCompression from 'browser-image-compression';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
+import { v4 as uuid } from 'uuid';
+import { toast } from 'react-toastify';
+import imageCompression from 'browser-image-compression';
+import { SocketContext } from '../../../Context/socket';
+import { postUserSuggestion } from './apis';
 import '../index.css';
 
 const audienceOptions = [
@@ -45,19 +46,11 @@ const SuggestionForm = ({ initialAudience = defaultAudience, onSubmitted }) => {
     targetAudience: initialAudience,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userRole, setUserRole] = useState('user');
   const socket = useContext(SocketContext);
 
-  const getUserRole = useCallback(() => {
-    try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (user?.Role) setUserRole(user.Role);
-    } catch (e) { console.error(e); }
-  }, []);
-
-  React.useEffect(() => {
-    getUserRole();
-  }, [getUserRole]);
+  useEffect(() => {
+    // console.log("Socket connected:", socket?.id);
+  }, [socket]);
 
   const imageCompressOpts = {
     maxSizeMB: 1,
@@ -369,6 +362,11 @@ const SuggestionForm = ({ initialAudience = defaultAudience, onSubmitted }) => {
       </form>
     </Card>
   );
+};
+
+SuggestionForm.propTypes = {
+  initialAudience: PropTypes.array,
+  onSubmitted: PropTypes.func,
 };
 
 export default SuggestionForm;

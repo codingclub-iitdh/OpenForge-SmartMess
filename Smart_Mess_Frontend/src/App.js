@@ -1,8 +1,11 @@
+import { Suspense } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ToastContainer } from 'react-toastify';
 import { ConfigProvider } from 'antd';
+import Backdrop from '@mui/material/Backdrop';
+
 import { SocketContext, socket } from './Context/socket';
 // routes
 import Router from './routes';
@@ -13,8 +16,6 @@ import ScrollToTop from './components/scroll-to-top';
 import clientId from './constants/client-id';
 import ApiState from './Context/apiState';
 import 'react-toastify/dist/ReactToastify.css';
-import { Suspense } from 'react';
-import Backdrop from '@mui/material/Backdrop';
 
 // Ant Design theme — IIT Dharwad Purple/Gold
 const antTheme = {
