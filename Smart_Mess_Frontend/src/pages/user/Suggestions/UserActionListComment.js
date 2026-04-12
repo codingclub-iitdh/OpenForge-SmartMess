@@ -17,7 +17,7 @@ import { getoneSuggestion } from 'src/pages/user/apis.js';
 import { SocketContext } from '../../../Context/socket';
 import CommentCard from './CommentCard';
 
-export default function UserActionsListComment({ Id }, { isMobile }) {
+export default function UserActionsListComment({ Id, isMobile }) {
   const [openAdd, setOpenAdd] = React.useState(false);
   const [openView, setOpenView] = React.useState(false);
   const [comments, setComments] = React.useState([]);
@@ -48,12 +48,8 @@ export default function UserActionsListComment({ Id }, { isMobile }) {
   };
 
   const fetchUserComments = React.useCallback(async () => {
-    const res = await getoneSuggestion(suggestionId).then((res) => {
-      //   console.log(res);
-      setComments(res.data.suggestion.children);
-    });
-
-    // setComments(res.data.comments);
+    const res = await getoneSuggestion(suggestionId);
+    setComments(res?.data?.suggestion?.children || []);
   }, []);
 
   React.useEffect(() => {

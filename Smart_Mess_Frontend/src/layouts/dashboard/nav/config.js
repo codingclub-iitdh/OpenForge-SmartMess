@@ -55,7 +55,7 @@ const navConfig = [
     roles: ["manager", "secy", "dean"],
   },
   {
-    title: 'Issues',
+    title: 'Complaints',
     path: '/dashboard/suggestions',
     icon: icon('ic_issues'),
     roles: ["user", "manager", "secy", "dean", "admin"],

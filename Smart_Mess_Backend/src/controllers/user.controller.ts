@@ -142,7 +142,7 @@ export const giveRating = async (req: any, res: Response) => {
       if (existingUserReview) {
         // EDIT: Adjust average by delta, don't increase review count
         const oldRatingEntry = existingUserReview.ratings.find((r: any) => r.foodId.toString() === foodId);
-        const oldRating = oldRatingEntry ? oldRatingEntry.rating : 0;
+        const oldRating = oldRatingEntry?.rating ?? 0;
         const delta = rating - oldRating;
 
         const newAvg = ((avgRating * numReviews) + delta) / numReviews;

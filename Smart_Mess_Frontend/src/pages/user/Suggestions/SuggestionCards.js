@@ -1,423 +1,637 @@
 import * as React from 'react';
-import { styled } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import Card from '@mui/material/Card';
-import CardHeader from '@mui/material/CardHeader';
-import CardMedia from '@mui/material/CardMedia';
-import ArrowCircleUpSharpIcon from '@mui/icons-material/ArrowCircleUpSharp';
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Chip,
+  Divider,
+  Stack,
+  Typography,
+} from '@mui/material';
 import ArrowCircleDownSharpIcon from '@mui/icons-material/ArrowCircleDownSharp';
-import CardContent from '@mui/material/CardContent';
-import CardActions from '@mui/material/CardActions';
-import Collapse from '@mui/material/Collapse';
-import Avatar from '@mui/material/Avatar';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
-import { red, green } from '@mui/material/colors';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import dayjs from 'dayjs';
-import { voteSuggestion } from '../apis';
+import ArrowCircleUpSharpIcon from '@mui/icons-material/ArrowCircleUpSharp';
 import Delete from '@mui/icons-material/Delete';
-import { markAsresolved, markAsResolvedAdmin, reopenSuggestionAPI, voteResolutionAPI } from './apis';
-import { SocketContext } from 'src/Context/socket';
+import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
+import VerifiedUserOutlined from '@mui/icons-material/VerifiedUserOutlined';
+import AttachmentOutlinedIcon from '@mui/icons-material/AttachmentOutlined';
+import RestartAltOutlinedIcon from '@mui/icons-material/RestartAltOutlined';
+import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
+import Groups2OutlinedIcon from '@mui/icons-material/Groups2Outlined';
+import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 import { Modal, Input, message, Upload, Button as AntButton } from 'antd';
-import { UploadOutlined, VerifiedUserOutlined } from '@mui/icons-material';
+import { UploadOutlined } from '@mui/icons-material';
+import { voteSuggestion } from '../apis';
+import { markAsResolvedAdmin, reopenSuggestionAPI, voteResolutionAPI } from './apis';
 
-const ExpandMore = styled((props) => {
-  const { expand, ...other } = props;
-  return <IconButton {...other} />;
-})(({ theme, expand }) => ({
-  transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',
-  marginLeft: 'auto',
-  transition: theme.transitions.create('transform', {
-    duration: theme.transitions.duration.shortest,
-  }),
-}));
+const audienceLabels = {
+  management: 'Secy & Mess Manager',
+  dean: 'Dean SW',
+  students: 'Students',
+};
 
-export default function SuggestionCard(props) {
-  const { isMobile } = props;
-  const [expanded, setExpanded] = React.useState(false);
-  const { setVote, disable, canDelete, deleteSuggestion, discusson, suggestions } = props;
-  const [upvotes, setUpvotes] = useState(suggestions?.upvotes || props?.suggestions?.suggestion?.upvotes);
-  const [downvotes, setDownvotes] = useState(suggestions?.downvotes || props?.suggestions?.suggestion?.downvotes);
-  const suggestionid = props.key;
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
-  };
+const containsUserId = (collection = [], userId) =>
+  Array.isArray(collection) &&
+  collection.some((entry) => String(entry?._id || entry) === String(userId));
+
+const getAudienceBadges = (audience = []) => {
+  if (!Array.isArray(audience) || audience.length === 0) {
+    return [{ key: 'management', label: 'Secy & Mess Manager' }];
+  }
+
+  if (audience.length === 3) {
+    return [{ key: 'all', label: 'All' }];
+  }
+
+  return audience.map((value) => ({
+    key: value,
+    label: audienceLabels[value] || value,
+  }));
+};
+
+export default function SuggestionCard({
+  user = {},
+  suggestions,
+  disable,
+  canDelete,
+  deleteSuggestion,
+  discusson,
+  isMobile,
+}) {
   const navigate = useNavigate();
-  const handleClick = async (isUpvote, suggestionId) => {
-    const res = await voteSuggestion({ upvote: isUpvote, suggestionId });
-    setUpvotes(res.data.upvotes);
-    setDownvotes(res.data.downvotes);
-  };
-  const handleCardClick = () => {
-    navigate(props?.suggestions?._id);
-  };
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
-  
-  // Official Resolution Modal State
-  const [resolutionModalOpen, setResolutionModalOpen] = useState(false);
-  const [resolutionText, setResolutionText] = useState("");
-  const [resolutionFile, setResolutionFile] = useState(null);
-  const [submittingResolution, setSubmittingResolution] = useState(false);
-  
-  // Reopen Modal State
-  const [reopenModalOpen, setReopenModalOpen] = useState(false);
-  const [reopenText, setReopenText] = useState("");
-  const [submittingReopen, setSubmittingReopen] = useState(false);
+  const [upvotes, setUpvotes] = React.useState(suggestions?.upvotes || []);
+  const [downvotes, setDownvotes] = React.useState(suggestions?.downvotes || []);
+  const [expanded, setExpanded] = React.useState(false);
+  const [resolutionModalOpen, setResolutionModalOpen] = React.useState(false);
+  const [resolutionText, setResolutionText] = React.useState('');
+  const [resolutionFile, setResolutionFile] = React.useState(null);
+  const [submittingResolution, setSubmittingResolution] = React.useState(false);
+  const [reopenModalOpen, setReopenModalOpen] = React.useState(false);
+  const [reopenText, setReopenText] = React.useState('');
+  const [submittingReopen, setSubmittingReopen] = React.useState(false);
+  const [resUpvotes, setResUpvotes] = React.useState(suggestions?.resolutionUpvotes || []);
+  const [resDownvotes, setResDownvotes] = React.useState(suggestions?.resolutionDownvotes || []);
 
-  // Resolution Vote State
-  const [resUpvotes, setResUpvotes] = useState(props?.suggestions?.resolutionUpvotes || []);
-  const [resDownvotes, setResDownvotes] = useState(props?.suggestions?.resolutionDownvotes || []);
+  const officialResponses = Array.isArray(suggestions?.responseHistory)
+    ? [...suggestions.responseHistory].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    : [];
+  const audienceBadges = getAudienceBadges(suggestions?.targetAudience);
+  const isAuthor = user?._id === suggestions?.userId?._id;
+  const isAdminViewer = ['manager', 'admin', 'secy', 'dean'].includes(user?.Role);
+  const isVotingDisabled = disable || isAdminViewer;
+  const hasUpvoted = containsUserId(upvotes, user?._id);
+  const hasDownvoted = containsUserId(downvotes, user?._id);
+  const hasApprovedResponse = containsUserId(resUpvotes, user?._id);
+  const hasRejectedResponse = containsUserId(resDownvotes, user?._id);
+  const latestOfficialResponse = officialResponses[0] || (suggestions?.officialResponse
+    ? {
+        response: suggestions.officialResponse,
+        attachment: suggestions.officialAttachment,
+        respondedByRole: suggestions?.resolvedByRole || 'authority',
+      }
+    : null);
+
+  const handleVote = async (isUpvote) => {
+    const res = await voteSuggestion({ upvote: isUpvote, suggestionId: suggestions?._id });
+    setUpvotes(res?.data?.upvotes || []);
+    setDownvotes(res?.data?.downvotes || []);
+  };
 
   const handleResolutionVote = async (isUpvote) => {
-    const res = await voteResolutionAPI({ upvote: isUpvote, suggestionId: props?.suggestions?._id });
-    if (res && res.data) {
-       setResUpvotes(res.data.resolutionUpvotes);
-       setResDownvotes(res.data.resolutionDownvotes);
+    const res = await voteResolutionAPI({ upvote: isUpvote, suggestionId: suggestions?._id });
+    if (res?.data) {
+      setResUpvotes(res.data.resolutionUpvotes || []);
+      setResDownvotes(res.data.resolutionDownvotes || []);
     }
   };
 
-  const isAuthor = props?.user?._id === props?.suggestions?.userId?._id;
-  const isVotingDisabled = disable || ['manager', 'admin', 'secy', 'dean'].includes(props?.user?.Role);
-
   const handleResolverSubmit = async () => {
-    if (!resolutionText) {
-      message.error("Resolution Action Details are required!");
+    if (!resolutionText.trim()) {
+      message.error('Resolution details are required.');
       return;
     }
+
     setSubmittingResolution(true);
-    let formData = new FormData();
-    formData.append("suggestionId", props.suggestions._id);
-    formData.append("response", resolutionText);
+    const formData = new FormData();
+    formData.append('suggestionId', suggestions._id);
+    formData.append('response', resolutionText.trim());
     if (resolutionFile) {
-      formData.append("image", resolutionFile);
+      formData.append('image', resolutionFile);
     }
-    
+
     const res = await markAsResolvedAdmin(formData);
-    if (res && res.status === 204) {
-       message.success("Issue successfully officially resolved.");
-       setResolutionModalOpen(false);
-       navigate(0); // Quick refresh to poll closed state
+    if (res?.status === 204) {
+      message.success('Official response posted successfully.');
+      setResolutionModalOpen(false);
+      navigate(0);
     } else {
-       message.error("Failed to commit resolution");
+      message.error('Failed to post official response.');
     }
     setSubmittingResolution(false);
   };
 
   const handleReopenSubmit = async () => {
-    if (!reopenText) {
-      message.error("Complaint body is required to reopen!");
+    if (!reopenText.trim()) {
+      message.error('Complaint details are required to reopen.');
       return;
     }
+
     setSubmittingReopen(true);
-    const res = await reopenSuggestionAPI({ suggestionId: props.suggestions._id, suggestion: reopenText });
-    if (res && res.status === 204) {
-       message.success("Ticket Successfully Reopened!");
-       setReopenModalOpen(false);
-       navigate(0); // Poll fresh updates
+    const res = await reopenSuggestionAPI({
+      suggestionId: suggestions._id,
+      suggestion: reopenText.trim(),
+      targetAudience: (suggestions?.targetAudience || []).join(','),
+    });
+
+    if (res?.status === 204) {
+      message.success('Ticket reopened successfully.');
+      setReopenModalOpen(false);
+      navigate(0);
     } else {
-       message.error("Failed to reopen ticket.");
+      message.error('Failed to reopen ticket.');
     }
     setSubmittingReopen(false);
   };
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
   return (
-    <Card
-      sx={{
-        width: !isMobile ? '95%' : '100%',
-        mt: 2,
-        borderRadius: 3,
-        boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-        border: '1px solid rgba(108,27,133,0.1)',
-        transition: 'transform 0.2s',
-        '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: '0 8px 24px rgba(108,27,133,0.12)'
-        }
-      }}
-    >
-      <div
-        style={{
+    <>
+      <Card
+        sx={{
           width: '100%',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          padding: !isMobile ? '6px 16px' : '4px 8px',
-          borderBottom: '1px solid rgba(0,0,0,0.04)'
+          mt: 2,
+          borderRadius: 6,
+          overflow: 'hidden',
+          border: '1px solid rgba(92, 23, 110, 0.12)',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(250,244,255,0.98) 100%)',
+          boxShadow: '0 24px 60px rgba(73, 18, 92, 0.08)',
         }}
       >
-        <CardHeader
-          avatar={<Avatar sx={{ bgcolor: props?.suggestions?.status === 'open' ? '#ffad4a' : '#4CAF50', color: props?.suggestions?.status === 'open' ? '#2E0845' : 'white', fontWeight: 800 }} aria-label="recipe" src={props?.suggestions?.userId?.Image}>{props?.suggestions?.userId?.Username?.charAt(0)?.toUpperCase()} </Avatar>}
-          title={
-              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{props?.suggestions?.userId?.Username}</Typography>
-          }
-          subheader={dayjs(props?.suggestions?.createdAt).format('DD MMM YYYY, hh:mm A')}
+        <Box
           sx={{
-            padding: '10px 0',
-            flex: 1
+            p: { xs: 2.2, md: 3 },
+            background: 'linear-gradient(135deg, rgba(76, 15, 97, 0.97) 0%, rgba(110, 29, 134, 0.93) 52%, rgba(142, 46, 95, 0.92) 100%)',
+            color: '#fff',
           }}
-          subheaderTypographyProps={{ fontSize: '12px', color: 'text.secondary' }}
-          action={
-              <Chip 
-                  label={props?.suggestions?.status?.toUpperCase()} 
-                  size="small"
-                  sx={{ 
-                      ml: 2, mt: 1, 
-                      fontWeight: 800, 
-                      fontSize: '0.7rem',
-                      color: props?.suggestions?.status === 'open' ? '#2E0845' : '#fff',
-                      bgcolor: props?.suggestions?.status === 'open' ? '#ffad4a' : '#4CAF50'
-                  }} 
-              />
-          }
-        />
-        {canDelete && (
-          <Button
-            color="error"
-            variant="text"
-            sx={{ mt: 1 }}
-            onClick={() => {
-              deleteSuggestion(props?.suggestions?._id);
-            }}
-          >
-            <Delete />
-          </Button>
-        )}
-      </div>
-      {console.log(props.suggestions?.image)}
-      {!props.iscomment && props.suggestions?.image && (
-        <CardMedia
-          component="img"
-          height="200px"
-          src={props.suggestions.image}
-          alt="Paella dish"
-          sx={{
-            objectFit: 'contain',
-            background: 'inherit',
-          }}
-        />
-      )}
-
-      <CardContent sx={{ pt: 3 }}>
-        <Typography variant="h5" color="text.primary" sx={{ fontWeight: 800, color: '#2E0845', mb: 2, fontFamily: "'DM Serif Display', serif" }}>
-          {props?.suggestions?.suggestionTitle}
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-          {canDelete
-            ? props?.suggestions?.suggestion?.substring(0, Math.min(100, props?.suggestions?.suggestion?.length))
-            : props?.suggestions?.suggestion}
-
-          {props?.comments?.comment}
-          {canDelete && props?.suggestions?.suggestion?.length > 100 && <>...</>}
-        </Typography>
-      </CardContent>
-      {!canDelete && (
-        <CardActions
-          disableSpacing
-          style={
-            isDesktop
-              ? { display: 'flex', justifyContent: 'space-between' }
-              : { display: 'flex', flexDirection: 'column', justifyContent: 'space-between', marginBottom: '10px' }
-          }
         >
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              sx={{ color: '#4CAF50', borderColor: 'rgba(76, 175, 80, 0.5)', borderRadius: 4, px: 2, '&:hover': !isVotingDisabled ? { bgcolor: 'rgba(76,175,80,0.1)' } : {} }}
-              disabled={isVotingDisabled}
-              onClick={() => {
-                handleClick(true, props?.suggestions?._id);
-              }}
-              startIcon={<ArrowCircleUpSharpIcon />}
-            >
-              <Typography sx={{ fontWeight: 700 }}>{upvotes?.length}</Typography>
-            </Button>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={2}
+            justifyContent="space-between"
+            alignItems={{ xs: 'flex-start', md: 'center' }}
+          >
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Avatar
+                src={suggestions?.userId?.Image}
+                sx={{
+                  width: 54,
+                  height: 54,
+                  bgcolor: suggestions?.status === 'open' ? '#ffcc73' : '#f7d9a2',
+                  color: '#4b0f61',
+                  fontWeight: 800,
+                }}
+              >
+                {suggestions?.userId?.Username?.charAt(0)?.toUpperCase()}
+              </Avatar>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                  {suggestions?.userId?.Username}
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  {dayjs(suggestions?.createdAt).format('DD MMM YYYY, hh:mm A')}
+                </Typography>
+              </Box>
+            </Stack>
 
-            <Button
-              variant="outlined"
-              size="small"
-              sx={{ color: '#f44336', borderColor: 'rgba(244, 67, 54, 0.5)', borderRadius: 4, px: 2, '&:hover': !isVotingDisabled ? { bgcolor: 'rgba(244,67,54,0.1)' } : {} }}
-              disabled={isVotingDisabled}
-              onClick={() => {
-                handleClick(false, props?.suggestions?._id);
-              }}
-              startIcon={<ArrowCircleDownSharpIcon />}
-            >
-              <Typography sx={{ fontWeight: 700 }}>{downvotes?.length}</Typography>
-            </Button>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-             {!props.discusson && (
-               <Button variant="contained" size="small" sx={{ bgcolor: '#6c1b85', '&:hover': {bgcolor: '#4A0E6B'}, borderRadius: 4, textTransform: 'none', fontWeight: 600, px: 3, boxShadow: 'none' }} onClick={handleCardClick}>
-                 {isVotingDisabled ? 'View Discussion' : 'Join Discussion'}
-               </Button>
-             )}
-             
-             {isVotingDisabled && props?.suggestions?.status === 'open' && (
-               <Button
-                 size="small"
-                 sx={{ borderRadius: 4, textTransform: 'none', fontWeight: 600, px: 3, boxShadow: 'none' }}
-                 color="success"
-                 variant="contained"
-                 onClick={() => setResolutionModalOpen(true)}
-               >
-                 Resolve Issue
-               </Button>
-             )}
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+              <Chip
+                label={suggestions?.status === 'open' ? 'Open' : 'Resolved'}
+                sx={{
+                  bgcolor: '#ffcc73',
+                  color: '#4b0f61',
+                  fontWeight: 800,
+                }}
+              />
+              {audienceBadges.map((badge) => (
+                <Chip
+                  key={badge.key}
+                  icon={<Groups2OutlinedIcon />}
+                  label={badge.label}
+                  sx={{
+                    bgcolor: 'rgba(255,255,255,0.12)',
+                    color: '#fff',
+                    '& .MuiChip-icon': { color: '#ffcc73' },
+                  }}
+                />
+              ))}
+            </Stack>
+          </Stack>
+        </Box>
 
-             {isAuthor && props?.suggestions?.status === 'closed' && (
-               <Button
-                 size="small"
-                 sx={{ borderRadius: 4, textTransform: 'none', fontWeight: 600, px: 3, boxShadow: 'none' }}
-                 color="warning"
-                 variant="contained"
-                 onClick={() => {
-                     setReopenText(props.suggestions.suggestion);
-                     setReopenModalOpen(true);
-                 }}
-               >
-                 Reopen Ticket
-               </Button>
-             )}
-          </div>
+        {suggestions?.image && !discusson && (
+          <CardMedia
+            component="img"
+            height="220"
+            src={suggestions.image}
+            alt={suggestions.suggestionTitle}
+            sx={{ objectFit: 'cover', borderBottom: '1px solid rgba(31, 59, 47, 0.08)' }}
+          />
+        )}
 
-          {canDelete && props?.suggestions?.suggestion?.length > 100 && (
-            <ExpandMore expand={expanded} onClick={handleExpandClick} aria-expanded={expanded} aria-label="show more">
-              <ExpandMoreIcon />
-            </ExpandMore>
-          )}
-        </CardActions>
-      )}
+        <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+          <Stack spacing={2}>
+            <Box>
+              <Typography
+                variant="overline"
+                sx={{ color: '#8e2e5f', fontWeight: 800, letterSpacing: 1.2 }}
+              >
+                {suggestions?.suggestionType || 'Complaint'}
+              </Typography>
+              <Typography
+                variant="h4"
+                sx={{
+                  mt: 0.5,
+                  color: '#4b0f61',
+                  fontWeight: 800,
+                  fontFamily: "'DM Serif Display', serif",
+                  fontSize: { xs: '1.55rem', md: '2rem' },
+                }}
+              >
+                {suggestions?.suggestionTitle}
+              </Typography>
+            </Box>
 
-      {/* RENDER THE RESOLUTION IF IT EXISTS (Persist even if reopened) */}
-      {props?.suggestions?.officialResponse && (
-         <CardContent sx={{ bgcolor: 'rgba(76,175,80,0.05)', borderTop: '1px solid rgba(76,175,80,0.1)', mt: 1 }}>
-            <Typography variant="overline" sx={{ color: '#4CAF50', fontWeight: 800, mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                 <VerifiedUserOutlined fontSize="small" />
-                 Official Resolution Statement
-               </div>
-               
-               <div style={{ display: 'flex', gap: '4px' }}>
-                 <Button
-                   variant="outlined"
-                   size="small"
-                   sx={{ minWidth: '40px', color: '#4CAF50', borderColor: 'rgba(76, 175, 80, 0.5)', borderRadius: 2, px: 1, py: 0 }}
-                   disabled={isVotingDisabled}
-                   onClick={() => handleResolutionVote(true)}
-                 >
-                   <ArrowCircleUpSharpIcon sx={{ fontSize: '18px', mr: 0.5 }} />
-                   <Typography sx={{ fontWeight: 700, fontSize: '0.75rem' }}>{resUpvotes?.length || 0}</Typography>
-                 </Button>
-                 <Button
-                   variant="outlined"
-                   size="small"
-                   sx={{ minWidth: '40px', color: '#f44336', borderColor: 'rgba(244, 67, 54, 0.5)', borderRadius: 2, px: 1, py: 0 }}
-                   disabled={isVotingDisabled}
-                   onClick={() => handleResolutionVote(false)}
-                 >
-                   <ArrowCircleDownSharpIcon sx={{ fontSize: '18px', mr: 0.5 }} />
-                   <Typography sx={{ fontWeight: 700, fontSize: '0.75rem' }}>{resDownvotes?.length || 0}</Typography>
-                 </Button>
-               </div>
+            <Typography variant="body1" sx={{ color: '#4d5a63', lineHeight: 1.9 }}>
+              {canDelete && !expanded && suggestions?.suggestion?.length > 170
+                ? `${suggestions?.suggestion?.slice(0, 170)}...`
+                : suggestions?.suggestion}
             </Typography>
-            <Typography variant="body2" sx={{ color: '#2E0845', fontWeight: 500, fontStyle: 'italic', pl: 2, borderLeft: '3px solid #4CAF50' }}>
-               "{props?.suggestions?.officialResponse}"
-            </Typography>
-            {props?.suggestions?.officialAttachment && (
-               <Button 
-                  variant="outlined" 
-                  size="small" 
-                  sx={{ mt: 2, borderRadius: 2 }} 
-                  href={props.suggestions.officialAttachment} 
-                  target="_blank"
-               >
-                  View Attachment
-               </Button>
+
+            {canDelete && suggestions?.suggestion?.length > 170 && (
+              <Button
+                variant="text"
+                onClick={() => setExpanded((prev) => !prev)}
+                sx={{
+                  alignSelf: 'flex-start',
+                  p: 0,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    color: '#6e1d86',
+                  }}
+                >
+                  {expanded ? 'Show less' : 'Read full complaint'}
+              </Button>
             )}
-         </CardContent>
-      )}
 
-      {props?.suggestions?.suggestion?.length > 100 && (
-        <Collapse in={expanded} timeout="auto" unmountOnExit>
-          <CardContent>
-            <Typography paragraph>{props.suggestions?.suggestion}</Typography>
-          </CardContent>
-        </Collapse>
-      )}
-      
-      {/* OFFICIAL RESOLVING MODAL */}
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={1.2}
+              justifyContent="space-between"
+              alignItems={{ xs: 'stretch', md: 'center' }}
+            >
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  disabled={isVotingDisabled}
+                  onClick={() => handleVote(true)}
+                  startIcon={<ArrowCircleUpSharpIcon />}
+                  sx={{
+                    borderRadius: 999,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    color: hasUpvoted ? '#fff' : '#6e1d86',
+                    borderColor: hasUpvoted ? '#6e1d86' : 'rgba(110, 29, 134, 0.28)',
+                    bgcolor: hasUpvoted ? '#6e1d86' : 'transparent',
+                    '&:hover': {
+                      bgcolor: hasUpvoted ? '#5c176e' : 'rgba(110, 29, 134, 0.05)',
+                      borderColor: '#6e1d86',
+                    },
+                  }}
+                >
+                  {upvotes?.length || 0}
+                </Button>
+                <Button
+                  variant="outlined"
+                  disabled={isVotingDisabled}
+                  onClick={() => handleVote(false)}
+                  startIcon={<ArrowCircleDownSharpIcon />}
+                  sx={{
+                    borderRadius: 999,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    color: hasDownvoted ? '#fff' : '#8e2e5f',
+                    borderColor: hasDownvoted ? '#8e2e5f' : 'rgba(142, 46, 95, 0.28)',
+                    bgcolor: hasDownvoted ? '#8e2e5f' : 'transparent',
+                    '&:hover': {
+                      bgcolor: hasDownvoted ? '#78284f' : 'rgba(142, 46, 95, 0.05)',
+                      borderColor: '#8e2e5f',
+                    },
+                  }}
+                >
+                  {downvotes?.length || 0}
+                </Button>
+              </Stack>
+
+              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+                {!discusson && (
+                  <Button
+                    variant="contained"
+                    startIcon={<ForumOutlinedIcon />}
+                    onClick={() => navigate(suggestions?._id)}
+                    sx={{
+                      borderRadius: 999,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      background: 'linear-gradient(135deg, #5c176e 0%, #8e2e5f 100%)',
+                    }}
+                  >
+                    {isAdminViewer ? 'View Thread' : 'Join Discussion'}
+                  </Button>
+                )}
+
+                {isAdminViewer && suggestions?.status === 'open' && (
+                  <Button
+                    variant="contained"
+                    startIcon={<TaskAltOutlinedIcon />}
+                    onClick={() => setResolutionModalOpen(true)}
+                    sx={{
+                      borderRadius: 999,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      bgcolor: '#5c176e',
+                      '&:hover': { bgcolor: '#4b0f61' },
+                    }}
+                  >
+                    Post Official Response
+                  </Button>
+                )}
+
+                {isAuthor && suggestions?.status === 'closed' && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<RestartAltOutlinedIcon />}
+                    onClick={() => {
+                      setReopenText(suggestions?.suggestion || '');
+                      setReopenModalOpen(true);
+                    }}
+                    sx={{
+                      borderRadius: 999,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      borderColor: '#8e2e5f',
+                      color: '#8e2e5f',
+                    }}
+                  >
+                    Reopen Ticket
+                  </Button>
+                )}
+
+                {canDelete && (
+                  <Button
+                    variant="text"
+                    color="error"
+                    startIcon={<Delete />}
+                    onClick={() => deleteSuggestion(suggestions?._id)}
+                    sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 700 }}
+                  >
+                    Delete
+                  </Button>
+                )}
+              </Stack>
+            </Stack>
+          </Stack>
+        </CardContent>
+
+        {latestOfficialResponse && (
+          <>
+            <Divider />
+            <Box sx={{ px: { xs: 2.5, md: 3.5 }, pt: 2.5, pb: officialResponses.length > 0 ? 2.5 : 1.5, bgcolor: 'rgba(92, 23, 110, 0.03)' }}>
+              <Stack spacing={2}>
+                <Box
+                  sx={{
+                    p: 2.2,
+                    borderRadius: 4,
+                    border: '1px solid rgba(92, 23, 110, 0.12)',
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,247,233,0.98) 100%)',
+                  }}
+                >
+                  <Stack spacing={1.2}>
+                    <Stack
+                      direction={{ xs: 'column', md: 'row' }}
+                      justifyContent="space-between"
+                      alignItems={{ xs: 'flex-start', md: 'center' }}
+                      spacing={1.2}
+                    >
+                      <Stack direction="row" spacing={1.2} alignItems="center">
+                        <VerifiedUserOutlined sx={{ color: '#5c176e' }} />
+                        <Box>
+                          <Typography sx={{ fontWeight: 800, color: '#5c176e' }}>
+                            Authority Responses
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#7a6a86' }}>
+                            {officialResponses.length || 1} response{(officialResponses.length || 1) > 1 ? 's' : ''} visible to students
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                        <Chip label="Visible History" sx={{ bgcolor: '#ffcc73', color: '#4b0f61', fontWeight: 800 }} />
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          disabled={isVotingDisabled}
+                          onClick={() => handleResolutionVote(true)}
+                          startIcon={<ArrowCircleUpSharpIcon />}
+                          sx={{
+                            borderRadius: 999,
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            color: hasApprovedResponse ? '#fff' : '#6e1d86',
+                            borderColor: hasApprovedResponse ? '#6e1d86' : 'rgba(110, 29, 134, 0.28)',
+                            bgcolor: hasApprovedResponse ? '#6e1d86' : '#fff',
+                          }}
+                        >
+                          Helpful {resUpvotes?.length || 0}
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          disabled={isVotingDisabled}
+                          onClick={() => handleResolutionVote(false)}
+                          startIcon={<ArrowCircleDownSharpIcon />}
+                          sx={{
+                            borderRadius: 999,
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            color: hasRejectedResponse ? '#fff' : '#8e2e5f',
+                            borderColor: hasRejectedResponse ? '#8e2e5f' : 'rgba(142, 46, 95, 0.28)',
+                            bgcolor: hasRejectedResponse ? '#8e2e5f' : '#fff',
+                          }}
+                        >
+                          Not Helpful {resDownvotes?.length || 0}
+                        </Button>
+                      </Stack>
+                    </Stack>
+
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: '#31414a',
+                        lineHeight: 1.9,
+                        pl: 1.8,
+                        borderLeft: '3px solid #8e2e5f',
+                      }}
+                    >
+                      {latestOfficialResponse?.response}
+                    </Typography>
+
+                    {latestOfficialResponse?.attachment && (
+                      <Button
+                        component="a"
+                        href={latestOfficialResponse.attachment}
+                        target="_blank"
+                        rel="noreferrer"
+                        startIcon={<AttachmentOutlinedIcon />}
+                        sx={{
+                          alignSelf: 'flex-start',
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          color: '#8e2e5f',
+                        }}
+                      >
+                        View authority attachment
+                      </Button>
+                    )}
+                  </Stack>
+                </Box>
+
+                {officialResponses.length > 0 && (
+                  <Stack spacing={2.2}>
+                    {officialResponses.map((entry, index) => (
+                      <Box
+                        key={`${entry.createdAt}-${index}`}
+                        sx={{
+                          p: 2.2,
+                          borderRadius: 4,
+                          border: '1px solid rgba(92, 23, 110, 0.1)',
+                          bgcolor: '#fff',
+                        }}
+                      >
+                        <Stack spacing={1.2}>
+                          <Stack
+                            direction={{ xs: 'column', md: 'row' }}
+                            spacing={1}
+                            justifyContent="space-between"
+                          >
+                            <Box>
+                              <Typography sx={{ fontWeight: 800, color: '#5c176e' }}>
+                                {entry?.respondedBy?.Username || 'Administration'}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#7a6a86' }}>
+                                {entry?.respondedByRole?.toUpperCase()} {' - '}{dayjs(entry?.createdAt).format('DD MMM YYYY, hh:mm A')}
+                              </Typography>
+                            </Box>
+                            {index === 0 && (
+                              <Chip
+                                label="Latest"
+                                sx={{ alignSelf: 'flex-start', bgcolor: '#5c176e', color: '#fff', fontWeight: 700 }}
+                              />
+                            )}
+                          </Stack>
+
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              color: '#31414a',
+                              lineHeight: 1.9,
+                              pl: 1.8,
+                              borderLeft: '3px solid #ffcc73',
+                            }}
+                          >
+                            {entry?.response}
+                          </Typography>
+
+                          {entry?.attachment && (
+                            <Button
+                              component="a"
+                              href={entry.attachment}
+                              target="_blank"
+                              rel="noreferrer"
+                              startIcon={<AttachmentOutlinedIcon />}
+                              sx={{
+                                alignSelf: 'flex-start',
+                                textTransform: 'none',
+                                fontWeight: 700,
+                                color: '#8e2e5f',
+                              }}
+                            >
+                              View attachment
+                            </Button>
+                          )}
+                        </Stack>
+                      </Box>
+                    ))}
+                  </Stack>
+                )}
+              </Stack>
+            </Box>
+          </>
+        )}
+      </Card>
+
       <Modal
-         title={<Typography sx={{ fontWeight: 800, color: '#4CAF50' }}>Submit Official Resolution</Typography>}
-         open={resolutionModalOpen}
-         onOk={handleResolverSubmit}
-         onCancel={() => setResolutionModalOpen(false)}
-         confirmLoading={submittingResolution}
-         okText="Close Issue & Notify"
-         okButtonProps={{ style: { background: '#4CAF50' } }}
+        title={<Typography sx={{ fontWeight: 800, color: '#5c176e' }}>Post Official Response</Typography>}
+        open={resolutionModalOpen}
+        onOk={handleResolverSubmit}
+        onCancel={() => setResolutionModalOpen(false)}
+        confirmLoading={submittingResolution}
+        okText="Publish Response"
+        okButtonProps={{ style: { background: '#5c176e' } }}
       >
-         <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-            Provide the administrative action taken to resolve this ticket. This statement will be permanently attached to the issue for transparency.
-         </Typography>
-         
-         <Input.TextArea 
-            rows={4}
-            placeholder="Describe the action taken to resolve this issue..." 
-            value={resolutionText}
-            onChange={(e) => setResolutionText(e.target.value)}
-            style={{ marginBottom: '16px' }}
-         />
-         
-         <Upload 
-            maxCount={1}
-            beforeUpload={(file) => {
-               setResolutionFile(file);
-               return false; // Prevent auto-upload immediately
-            }}
-            onRemove={() => setResolutionFile(null)}
-         >
-            <AntButton icon={<UploadOutlined />}>Attach Proof/Document (Optional)</AntButton>
-         </Upload>
+        <Typography variant="body2" sx={{ mb: 2, color: '#61707b' }}>
+          This response will be added to the permanent issue timeline and shown to every selected recipient.
+        </Typography>
+
+        <Input.TextArea
+          rows={5}
+          placeholder="Describe the action taken, next steps, or official clarification..."
+          value={resolutionText}
+          onChange={(e) => setResolutionText(e.target.value)}
+          style={{ marginBottom: 16 }}
+        />
+
+        <Upload
+          maxCount={1}
+          beforeUpload={(file) => {
+            setResolutionFile(file);
+            return false;
+          }}
+          onRemove={() => setResolutionFile(null)}
+        >
+          <AntButton icon={<UploadOutlined />}>Attach proof or document</AntButton>
+        </Upload>
       </Modal>
 
-      {/* REOPEN TICKET MODAL */}
       <Modal
-         title={<Typography sx={{ fontWeight: 800, color: '#ffad4a' }}>Reopen Ticket</Typography>}
-         open={reopenModalOpen}
-         onOk={handleReopenSubmit}
-         onCancel={() => setReopenModalOpen(false)}
-         confirmLoading={submittingReopen}
-         okText="Reopen & Notify Admins"
-         okButtonProps={{ style: { background: '#2E0845' } }}
+        title={<Typography sx={{ fontWeight: 800, color: '#7a2f1d' }}>Reopen Ticket</Typography>}
+        open={reopenModalOpen}
+        onOk={handleReopenSubmit}
+        onCancel={() => setReopenModalOpen(false)}
+        confirmLoading={submittingReopen}
+        okText="Reopen Ticket"
+        okButtonProps={{ style: { background: '#7a2f1d' } }}
       >
-         <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-            The previous resolution will remain attached as a historical record. Please update or append your original complaint below to explain what happened.
-         </Typography>
-         
-         <Input.TextArea 
-            rows={10}
-            value={reopenText}
-            onChange={(e) => setReopenText(e.target.value)}
-            style={{ marginBottom: '16px' }}
-         />
-      </Modal>
+        <Typography variant="body2" sx={{ mb: 2, color: '#61707b' }}>
+          Earlier official responses will remain visible. Add the latest issue details below so the next reviewer has full context.
+        </Typography>
 
-    </Card>
+        <Input.TextArea
+          rows={10}
+          value={reopenText}
+          onChange={(e) => setReopenText(e.target.value)}
+        />
+      </Modal>
+    </>
   );
 }

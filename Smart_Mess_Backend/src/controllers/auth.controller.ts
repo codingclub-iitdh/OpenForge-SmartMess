@@ -7,6 +7,13 @@ import { JWTLoadData } from '../Interface/interfaces';
 import { sendNotification } from '../config/firebaseWeb';
 import Analytics from '../models/analytics';
 
+const normalizeEmail = (value: string = '') => value.trim().toLowerCase();
+const parseEmailList = (value?: string) =>
+    (value || '')
+        .split(',')
+        .map(normalizeEmail)
+        .filter(Boolean);
+
 const webSigninHandler = async (req: Request, res: Response): Promise<Response | undefined> => {
     try {
         const { authCode, requestedRole } = req.body;
@@ -22,18 +29,20 @@ const webSigninHandler = async (req: Request, res: Response): Promise<Response |
                 let isNewUser = false;
                 // Determine maximum user role from .env whitelists
                 let maxRole = "user";
-                const managerEmails = process.env.MESS_MANAGER_EMAILS?.split(',').map(e => e.trim()) || [];
-                const secyEmails = process.env.MESS_SECY_EMAILS?.split(',').map(e => e.trim()) || [];
-                const deanEmails = process.env.DEAN_SW_EMAILS?.split(',').map(e => e.trim()) || [];
+                const normalizedUserEmail = normalizeEmail(userInfo.email);
+                const managerEmails = parseEmailList(process.env.MESS_MANAGER_EMAILS);
+                const secyEmails = parseEmailList(process.env.MESS_SECY_EMAILS);
+                const deanEmails = parseEmailList(process.env.DEAN_SW_EMAILS);
 
                 console.log("=== ROLE DEBUG ===");
-                console.log("Authenticating Email:", userInfo.email);
+                console.log("Authenticating Email:", normalizedUserEmail);
                 console.log("Parsed Manager Emails:", managerEmails);
+                console.log("Parsed Dean Emails:", deanEmails);
                 console.log("==================");
 
-                if (managerEmails.includes(userInfo.email)) maxRole = "manager";
-                else if (secyEmails.includes(userInfo.email)) maxRole = "secy";
-                else if (deanEmails.includes(userInfo.email)) maxRole = "dean";
+                if (managerEmails.includes(normalizedUserEmail)) maxRole = "manager";
+                else if (secyEmails.includes(normalizedUserEmail)) maxRole = "secy";
+                else if (deanEmails.includes(normalizedUserEmail)) maxRole = "dean";
 
                 if (!user) {
                     //create new user
@@ -139,18 +148,20 @@ const androidSigninHandler = async (req: Request, res: Response): Promise<Respon
         let isNewUser = false;
         // Determine user role from .env whitelists
         let assignedRole = "user";
-        const managerEmails = process.env.MESS_MANAGER_EMAILS?.split(',').map(e => e.trim()) || [];
-        const secyEmails = process.env.MESS_SECY_EMAILS?.split(',').map(e => e.trim()) || [];
-        const deanEmails = process.env.DEAN_SW_EMAILS?.split(',').map(e => e.trim()) || [];
+        const normalizedUserEmail = normalizeEmail(Email);
+        const managerEmails = parseEmailList(process.env.MESS_MANAGER_EMAILS);
+        const secyEmails = parseEmailList(process.env.MESS_SECY_EMAILS);
+        const deanEmails = parseEmailList(process.env.DEAN_SW_EMAILS);
 
         console.log("=== ROLE DEBUG ===");
-        console.log("Authenticating Email:", Email);
+        console.log("Authenticating Email:", normalizedUserEmail);
         console.log("Parsed Manager Emails:", managerEmails);
+        console.log("Parsed Dean Emails:", deanEmails);
         console.log("==================");
 
-        if (managerEmails.includes(Email)) assignedRole = "manager";
-        else if (secyEmails.includes(Email)) assignedRole = "secy";
-        else if (deanEmails.includes(Email)) assignedRole = "dean";
+        if (managerEmails.includes(normalizedUserEmail)) assignedRole = "manager";
+        else if (secyEmails.includes(normalizedUserEmail)) assignedRole = "secy";
+        else if (deanEmails.includes(normalizedUserEmail)) assignedRole = "dean";
 
         if (!user) {
             //create new user
